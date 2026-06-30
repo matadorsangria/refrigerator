@@ -109,7 +109,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 'fridg
 
         {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
-        <Text style={styles.label}>部屋</Text>
+        <Text style={styles.label}>場所</Text>
         <View style={styles.roomGrid}>
           {rooms.map(room => (
             <Pressable
