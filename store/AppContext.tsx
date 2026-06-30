@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
-import { Room, Ingredient, RoomId, FridgeShapeId } from '../types';
+import { Room, Ingredient, RoomId, FridgeShapeId, ShoppingItem } from '../types';
 import { supabase } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -25,10 +25,14 @@ type AppContextType = {
   addIngredient: (name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
   updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
+  shoppingItems: ShoppingItem[];
+  addShoppingItem: (name: string) => Promise<void>;
+  removeShoppingItem: (id: string) => Promise<void>;
 };
 
 type DbRoom = { id: string; position: number; name: string; household_id: string };
 type DbIngredient = { id: string; name: string; room_id: number; expires_at: string | null; created_at: string; household_id: string };
+type DbShoppingItem = { id: string; name: string; household_id: string; created_at: string };
 type MemberRole = 'creator' | 'member';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -54,6 +58,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [householdShape, setHouseholdShape] = useState<FridgeShapeId | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const appStateRef = useRef(AppState.currentState);
@@ -72,6 +77,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIngredients((data as DbIngredient[]).map(toIngredient));
   }, []);
 
+  const fetchShoppingItems = useCallback(async (hid: string) => {
+    const { data, error } = await supabase.from('shopping_items').select('*').eq('household_id', hid).order('created_at');
+    if (error) { console.error('[Supabase] fetchShoppingItems:', error.message); return; }
+    setShoppingItems((data as DbShoppingItem[]).map(i => ({ id: i.id, name: i.name })));
+  }, []);
+
   const fetchMemberCount = useCallback(async (hid: string) => {
     const { count, error } = await supabase.from('household_members').select('*', { count: 'exact', head: true }).eq('household_id', hid);
     if (error) { console.error('[Supabase] fetchMemberCount:', error.message); return; }
@@ -88,10 +99,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `household_id=eq.${hid}` }, () => fetchRooms(hid))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'ingredients', filter: `household_id=eq.${hid}` }, () => fetchIngredients(hid))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'household_members', filter: `household_id=eq.${hid}` }, () => fetchMemberCount(hid))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_items', filter: `household_id=eq.${hid}` }, () => fetchShoppingItems(hid))
       .subscribe((status) => console.log('[Supabase] Realtime:', status));
 
     channelRef.current = channel;
-  }, [fetchRooms, fetchIngredients, fetchMemberCount]);
+  }, [fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems]);
 
   // ── init: sign in anonymously → load household ────────────────────────────
 
@@ -126,7 +138,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setInviteCode(h?.invite_code ?? null);
         setHouseholdShape(h?.fridge_shape_id ?? 'standard');
         setMemberRole((memberRows.role as MemberRole) ?? 'member');
-        await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid)]);
+        await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid), fetchShoppingItems(hid)]);
         if (!cancelled) subscribeRealtime(hid);
       }
 
@@ -145,11 +157,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchRooms(householdId);
         fetchIngredients(householdId);
         fetchMemberCount(householdId);
+        fetchShoppingItems(householdId);
       }
       appStateRef.current = next;
     });
     return () => sub.remove();
-  }, [householdId, fetchRooms, fetchIngredients, fetchMemberCount]);
+  }, [householdId, fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems]);
 
   // ── household operations ───────────────────────────────────────────────────
 
@@ -162,9 +175,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHouseholdShape(shape_id ?? 'standard');
     setMemberCount(1);
     setMemberRole('creator');
-    await Promise.all([fetchRooms(hid), fetchIngredients(hid)]);
+    await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchShoppingItems(hid)]);
     subscribeRealtime(hid);
-  }, [fetchRooms, fetchIngredients, subscribeRealtime]);
+  }, [fetchRooms, fetchIngredients, fetchShoppingItems, subscribeRealtime]);
 
   const joinHousehold = useCallback(async (code: string) => {
     const { data, error } = await supabase.rpc('join_household_by_code', { p_invite_code: code.toUpperCase() });
@@ -184,9 +197,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setInviteCode(hData?.invite_code ?? code.toUpperCase());
     setHouseholdShape(hData?.fridge_shape_id ?? 'standard');
     setMemberRole('member');
-    await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid)]);
+    await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid), fetchShoppingItems(hid)]);
     subscribeRealtime(hid);
-  }, [fetchRooms, fetchIngredients, fetchMemberCount, subscribeRealtime]);
+  }, [fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, subscribeRealtime]);
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
@@ -219,12 +232,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (error) { console.error('[Supabase] removeIngredient:', error.message); fetchIngredients(householdId); }
   }, [householdId, fetchIngredients]);
 
+  const addShoppingItem = useCallback(async (name: string) => {
+    if (!householdId) return;
+    const id = Date.now().toString();
+    setShoppingItems(prev => [...prev, { id, name }]);
+    const { error } = await supabase.from('shopping_items').insert({ id, name, household_id: householdId });
+    if (error) { console.error('[Supabase] addShoppingItem:', error.message); fetchShoppingItems(householdId); }
+  }, [householdId, fetchShoppingItems]);
+
+  const removeShoppingItem = useCallback(async (id: string) => {
+    if (!householdId) return;
+    setShoppingItems(prev => prev.filter(i => i.id !== id));
+    const { error } = await supabase.from('shopping_items').delete().eq('id', id).eq('household_id', householdId);
+    if (error) { console.error('[Supabase] removeShoppingItem:', error.message); fetchShoppingItems(householdId); }
+  }, [householdId, fetchShoppingItems]);
+
   return (
     <AppContext.Provider value={{
       userId, householdId, inviteCode, memberCount, memberRole, householdShape,
       createHousehold, joinHousehold,
       rooms, ingredients, loading,
       updateRoomName, addIngredient, updateIngredient, removeIngredient,
+      shoppingItems, addShoppingItem, removeShoppingItem,
     }}>
       {children}
     </AppContext.Provider>

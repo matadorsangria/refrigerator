@@ -14,3 +14,8 @@ export type Ingredient = {
 };
 
 export type FridgeShapeId = string; // 'standard' | future shapes
+
+export type ShoppingItem = {
+  id: string;
+  name: string;
+};
