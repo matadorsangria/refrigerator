@@ -12,7 +12,7 @@ function parseDate(str?: string): Date | undefined {
 
 export default function EditIngredientScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { ingredients, updateIngredient } = useApp();
+  const { ingredients, updateIngredient, removeIngredient } = useApp();
   const router = useRouter();
 
   const ingredient = ingredients.find(i => i.id === id);
@@ -32,6 +32,7 @@ export default function EditIngredientScreen() {
         router.back();
       }}
       onCancel={() => router.back()}
+      onDelete={() => { removeIngredient(id); router.back(); }}
     />
   );
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,9 +24,10 @@ type Props = {
   initialExpiresAt?: Date;
   onSave: (name: string, roomId: RoomId, expiresAt?: string) => void;
   onCancel: () => void;
+  onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 'fridge', initialExpiresAt, onSave, onCancel }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 'fridge', initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms } = useApp();
   const { top } = useSafeAreaInsets();
 
@@ -88,7 +89,19 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 'fridg
           <Text style={styles.headerCancelText}>キャンセル</Text>
         </Pressable>
         <Text style={styles.headerTitle}>{title}</Text>
-        <View style={styles.headerCancel} />
+        {onDelete ? (
+          <Pressable
+            style={styles.headerCancel}
+            onPress={() => Alert.alert('食材を削除しますか？', '', [
+              { text: 'キャンセル', style: 'cancel' },
+              { text: '削除', style: 'destructive', onPress: onDelete },
+            ])}
+          >
+            <Ionicons name="trash-outline" size={22} color="#E74C3C" />
+          </Pressable>
+        ) : (
+          <View style={styles.headerCancel} />
+        )}
       </View>
       <ScrollView
         style={styles.container}
@@ -186,7 +199,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#C6C6C8',
   },
   headerTitle: { fontSize: 17, fontWeight: '600', color: '#000' },
-  headerCancel: { minWidth: 72 },
+  headerCancel: { minWidth: 72, alignItems: 'flex-end' },
   headerCancelText: { fontSize: 17, color: '#007AFF' },
   container: { flex: 1 },
   content: { paddingHorizontal: 20, paddingVertical: 10, gap: 8 },
