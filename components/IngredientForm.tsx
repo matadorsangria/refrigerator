@@ -28,7 +28,7 @@ type Props = {
 };
 
 export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
-  const { rooms } = useApp();
+  const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
   const [name, setName] = useState(initialName);
@@ -92,9 +92,9 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
         {onDelete ? (
           <Pressable
             style={styles.headerCancel}
-            onPress={() => Alert.alert('食材を削除しますか？', '', [
-              { text: 'キャンセル', style: 'cancel' },
-              { text: '削除', style: 'destructive', onPress: onDelete },
+            onPress={() => Alert.alert(`「${name}」を買うものに追加しますか？`, '', [
+              { text: 'いいえ', onPress: onDelete },
+              { text: 'はい', onPress: () => { addShoppingItem(name); onDelete?.(); } },
             ])}
           >
             <Ionicons name="trash-outline" size={22} color="#E74C3C" />
