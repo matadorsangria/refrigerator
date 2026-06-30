@@ -2,22 +2,21 @@ import { Alert, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FridgeView } from '../../../components/FridgeView';
 import { useApp } from '../../../store/AppContext';
-import { RoomId } from '../../../types';
+import { Room } from '../../../types';
 
 export default function HomeScreen() {
   const { rooms, updateRoomName } = useApp();
   const router = useRouter();
 
-  const handlePress = (roomId: RoomId) => {
-    router.push(`/room/${roomId}`);
+  const handlePress = (room: Room) => {
+    router.push(`/room/${room.id}`);
   };
 
-  const handleLongPress = (roomId: RoomId) => {
-    const room = rooms.find(r => r.id === roomId)!;
+  const handleLongPress = (room: Room) => {
     Alert.prompt(
       '部屋名を変更',
       '',
-      (name) => { if (name?.trim()) updateRoomName(roomId, name.trim()); },
+      (name) => { if (name?.trim()) updateRoomName(room.type, name.trim()); },
       'plain-text',
       room.name,
     );

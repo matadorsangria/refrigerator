@@ -113,9 +113,9 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 'fridg
         <View style={styles.roomGrid}>
           {rooms.map(room => (
             <Pressable
-              key={room.id}
-              style={[styles.roomChip, room.id === selectedRoomId && styles.roomChipSelected]}
-              onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.id); }}
+              key={room.type}
+              style={[styles.roomChip, room.type === selectedRoomId && styles.roomChipSelected]}
+              onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.type); }}
             >
               <Text style={[styles.roomChipText, room.id === selectedRoomId && styles.roomChipTextSelected]}>
                 {room.name}

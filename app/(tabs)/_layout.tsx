@@ -38,6 +38,7 @@ export default function TabLayout() {
         name="shopping"
         options={{
           title: '買うもの',
+          headerShown: false,
           tabBarIcon: tabIcon('cart', 'cart-outline'),
         }}
       />
@@ -45,6 +46,7 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: '設定',
+          headerShown: false,
           tabBarIcon: tabIcon('settings', 'settings-outline'),
         }}
       />

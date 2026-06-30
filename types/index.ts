@@ -6,7 +6,8 @@ export type RoomId =
   | 'freezer-lower';
 
 export type Room = {
-  id: RoomId;
+  id: string;    // UUID (DB PK)
+  type: RoomId;  // 部屋の種類 ('fridge' | 'vegetable' | ...)
   name: string;
 };
 

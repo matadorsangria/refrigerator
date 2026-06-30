@@ -3,7 +3,6 @@ import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-rout
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../../../store/AppContext';
-import { RoomId } from '../../../../types';
 import { sortByExpiry } from '../../../../utils/expiry';
 import { IngredientItem, ingredientListStyles } from '../../../../components/IngredientItem';
 
@@ -29,8 +28,8 @@ export default function RoomScreen() {
   const router = useRouter();
   const navigation = useNavigation();
 
-  const room = rooms.find(r => r.id === (id as RoomId));
-  const sorted = sortByExpiry(ingredients.filter(i => i.roomId === (id as RoomId)));
+  const room = rooms.find(r => r.id === id);
+  const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.type));
 
   return (
     <>
@@ -38,7 +37,7 @@ export default function RoomScreen() {
       <RoomHeader
         title={room?.name ?? '食材'}
         onBack={() => navigation.getParent()?.navigate('(home)' as never)}
-        onAdd={() => router.push({ pathname: '/ingredient/new', params: { roomId: id } })}
+        onAdd={() => router.push({ pathname: '/ingredient/new', params: { roomId: room?.type } })}
       />
       <FlatList
         style={styles.list}
