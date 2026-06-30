@@ -29,7 +29,7 @@ export default function RoomScreen() {
   const navigation = useNavigation();
 
   const room = rooms.find(r => r.id === id);
-  const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.type));
+  const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.position));
 
   return (
     <>
@@ -37,7 +37,7 @@ export default function RoomScreen() {
       <RoomHeader
         title={room?.name ?? '食材'}
         onBack={() => navigation.getParent()?.navigate('(home)' as never)}
-        onAdd={() => router.push({ pathname: '/ingredient/new', params: { roomId: room?.type } })}
+        onAdd={() => router.push({ pathname: '/ingredient/new', params: { roomId: room?.position } })}
       />
       <FlatList
         style={styles.list}

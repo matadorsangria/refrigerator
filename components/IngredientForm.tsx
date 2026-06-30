@@ -27,7 +27,7 @@ type Props = {
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 'fridge', initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms } = useApp();
   const { top } = useSafeAreaInsets();
 
@@ -128,11 +128,11 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 'fridg
         <View style={styles.roomGrid}>
           {rooms.map(room => (
             <Pressable
-              key={room.type}
-              style={[styles.roomChip, room.type === selectedRoomId && styles.roomChipSelected]}
-              onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.type); }}
+              key={room.position}
+              style={[styles.roomChip, room.position === selectedRoomId && styles.roomChipSelected]}
+              onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.position); }}
             >
-              <Text style={[styles.roomChipText, room.id === selectedRoomId && styles.roomChipTextSelected]}>
+              <Text style={[styles.roomChipText, room.position === selectedRoomId && styles.roomChipTextSelected]}>
                 {room.name}
               </Text>
             </Pressable>

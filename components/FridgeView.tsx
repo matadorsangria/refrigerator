@@ -1,9 +1,10 @@
 import { Dimensions, View, Text, Pressable, StyleSheet } from 'react-native';
-import { Room, RoomId } from '../types';
+import { Room, FridgeShapeId } from '../types';
 
 const FRIDGE_HEIGHT = Dimensions.get('window').width * 1.35;
 
 type Props = {
+  shape: FridgeShapeId;
   rooms: Room[];
   onPress: (room: Room) => void;
   onLongPress: (room: Room) => void;
@@ -29,44 +30,34 @@ function Cell({ room, style, onPress, onLongPress }: CellProps) {
   );
 }
 
-export function FridgeView({ rooms, onPress, onLongPress }: Props) {
-  const get = (type: RoomId) => rooms.find(r => r.type === type);
+// 'standard' 形状: 上から position 1〜5
+function StandardFridgeView({ rooms, onPress, onLongPress }: Omit<Props, 'shape'>) {
+  const get = (position: number) => rooms.find(r => r.position === position);
+  const cell = (position: number) => {
+    const r = get(position);
+    return {
+      room: r,
+      onPress: () => { if (r) onPress(r); },
+      onLongPress: () => { if (r) onLongPress(r); },
+    };
+  };
 
   return (
     <View style={[styles.fridge, { height: FRIDGE_HEIGHT }]}>
-      <Cell
-        room={get('fridge')}
-        style={{ flex: 4, backgroundColor: '#EBF5FB' }}
-        onPress={() => { const r = get('fridge'); if (r) onPress(r); }}
-        onLongPress={() => { const r = get('fridge'); if (r) onLongPress(r); }}
-      />
-      <Cell
-        room={get('vegetable')}
-        style={{ flex: 2, backgroundColor: '#EAFAF1' }}
-        onPress={() => { const r = get('vegetable'); if (r) onPress(r); }}
-        onLongPress={() => { const r = get('vegetable'); if (r) onLongPress(r); }}
-      />
+      <Cell {...cell(1)} style={{ flex: 4, backgroundColor: '#EBF5FB' }} />
+      <Cell {...cell(2)} style={{ flex: 2, backgroundColor: '#EAFAF1' }} />
       <View style={styles.row}>
-        <Cell
-          room={get('ice-maker')}
-          style={{ flex: 1, backgroundColor: '#D6EAF8', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: '#A9CCE3' }}
-          onPress={() => { const r = get('ice-maker'); if (r) onPress(r); }}
-          onLongPress={() => { const r = get('ice-maker'); if (r) onLongPress(r); }}
-        />
-        <Cell
-          room={get('freezer-upper')}
-          style={{ flex: 1, backgroundColor: '#D6EAF8' }}
-          onPress={() => { const r = get('freezer-upper'); if (r) onPress(r); }}
-          onLongPress={() => { const r = get('freezer-upper'); if (r) onLongPress(r); }}
-        />
+        <Cell {...cell(3)} style={{ flex: 1, backgroundColor: '#D6EAF8', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: '#A9CCE3' }} />
+        <Cell {...cell(4)} style={{ flex: 1, backgroundColor: '#D6EAF8' }} />
       </View>
-      <Cell
-        room={get('freezer-lower')}
-        style={{ flex: 2, backgroundColor: '#C5E2F5' }}
-        onPress={() => { const r = get('freezer-lower'); if (r) onPress(r); }}
-        onLongPress={() => { const r = get('freezer-lower'); if (r) onLongPress(r); }}
-      />
+      <Cell {...cell(5)} style={{ flex: 2, backgroundColor: '#C5E2F5' }} />
     </View>
+  );
+}
+
+export function FridgeView({ shape, rooms, onPress, onLongPress }: Props) {
+  return (
+    <StandardFridgeView rooms={rooms} onPress={onPress} onLongPress={onLongPress} />
   );
 }
 

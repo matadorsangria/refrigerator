@@ -5,7 +5,7 @@ import { useApp } from '../../../store/AppContext';
 import { Room } from '../../../types';
 
 export default function HomeScreen() {
-  const { rooms, updateRoomName } = useApp();
+  const { rooms, householdShape, updateRoomName } = useApp();
   const router = useRouter();
 
   const handlePress = (room: Room) => {
@@ -16,7 +16,7 @@ export default function HomeScreen() {
     Alert.prompt(
       '部屋名を変更',
       '',
-      (name) => { if (name?.trim()) updateRoomName(room.type, name.trim()); },
+      (name) => { if (name?.trim()) updateRoomName(room.position, name.trim()); },
       'plain-text',
       room.name,
     );
@@ -24,7 +24,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <FridgeView rooms={rooms} onPress={handlePress} onLongPress={handleLongPress} />
+      <FridgeView
+        shape={householdShape ?? 'standard'}
+        rooms={rooms}
+        onPress={handlePress}
+        onLongPress={handleLongPress}
+      />
     </View>
   );
 }

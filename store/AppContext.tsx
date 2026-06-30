@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
-import { Room, Ingredient, RoomId } from '../types';
+import { Room, Ingredient, RoomId, FridgeShapeId } from '../types';
 import { supabase } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -13,6 +13,7 @@ type AppContextType = {
   inviteCode: string | null;
   memberCount: number;
   memberRole: 'creator' | 'member' | null;
+  householdShape: FridgeShapeId | null;
   createHousehold: () => Promise<void>;
   joinHousehold: (code: string) => Promise<void>;
   // Data
@@ -20,24 +21,24 @@ type AppContextType = {
   ingredients: Ingredient[];
   loading: boolean;
   // CRUD
-  updateRoomName: (id: RoomId, name: string) => Promise<void>;
+  updateRoomName: (position: RoomId, name: string) => Promise<void>;
   addIngredient: (name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
   updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
 };
 
-type DbRoom = { id: string; type: string; name: string; position: number; household_id: string };
-type DbIngredient = { id: string; name: string; room_id: string; expires_at: string | null; created_at: string; household_id: string };
+type DbRoom = { id: string; position: number; name: string; household_id: string };
+type DbIngredient = { id: string; name: string; room_id: number; expires_at: string | null; created_at: string; household_id: string };
 type MemberRole = 'creator' | 'member';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toRoom(r: DbRoom): Room {
-  return { id: r.id, type: r.type as RoomId, name: r.name };
+  return { id: r.id, position: r.position, name: r.name };
 }
 
 function toIngredient(i: DbIngredient): Ingredient {
-  return { id: i.id, name: i.name, roomId: i.room_id as RoomId, expiresAt: i.expires_at ?? undefined };
+  return { id: i.id, name: i.name, roomId: i.room_id, expiresAt: i.expires_at ?? undefined };
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -50,6 +51,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [memberCount, setMemberCount] = useState(0);
   const [memberRole, setMemberRole] = useState<MemberRole | null>(null);
+  const [householdShape, setHouseholdShape] = useState<FridgeShapeId | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,7 +99,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function init() {
-      // サインイン (既存セッションがあれば復元)
       let { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         const { data, error } = await supabase.auth.signInAnonymously();
@@ -109,10 +110,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const uid = session.user.id;
       setUserId(uid);
 
-      // household を探す
       const { data: memberRows, error: memberErr } = await supabase
         .from('household_members')
-        .select('household_id, role, households(invite_code)')
+        .select('household_id, role, households(invite_code, fridge_shape_id)')
         .eq('user_id', uid)
         .limit(1)
         .single();
@@ -121,9 +121,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       if (!memberErr && memberRows) {
         const hid = memberRows.household_id as string;
-        const code = (memberRows.households as unknown as { invite_code: string } | null)?.invite_code ?? null;
+        const h = memberRows.households as unknown as { invite_code: string; fridge_shape_id: string } | null;
         setHouseholdId(hid);
-        setInviteCode(code);
+        setInviteCode(h?.invite_code ?? null);
+        setHouseholdShape(h?.fridge_shape_id ?? 'standard');
         setMemberRole((memberRows.role as MemberRole) ?? 'member');
         await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid)]);
         if (!cancelled) subscribeRealtime(hid);
@@ -136,7 +137,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [fetchRooms, fetchIngredients, fetchMemberCount, subscribeRealtime]);
 
-  // ── foreground 復帰時に再接続 ─────────────────────────────────────────────
+  // ── foreground 復帰時にデータ再取得 ──────────────────────────────────────
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
@@ -155,9 +156,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const createHousehold = useCallback(async () => {
     const { data: result, error } = await supabase.rpc('create_household');
     if (error || !result) { console.error('[Supabase] createHousehold:', error?.message); return; }
-    const { id: hid, invite_code: code } = result as { id: string; invite_code: string };
+    const { id: hid, invite_code: code, shape_id } = result as { id: string; invite_code: string; shape_id: string };
     setHouseholdId(hid);
     setInviteCode(code);
+    setHouseholdShape(shape_id ?? 'standard');
     setMemberCount(1);
     setMemberRole('creator');
     await Promise.all([fetchRooms(hid), fetchIngredients(hid)]);
@@ -165,14 +167,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [fetchRooms, fetchIngredients, subscribeRealtime]);
 
   const joinHousehold = useCallback(async (code: string) => {
-    // RPC が旧 household の削除まで一括処理する
     const { data, error } = await supabase.rpc('join_household_by_code', { p_invite_code: code.toUpperCase() });
     if (error) throw new Error(error.message === 'invalid_invite_code' ? '招待コードが正しくありません' : error.message);
 
     const hid = data as string;
-    const { data: h } = await supabase.from('households').select('invite_code').eq('id', hid).single();
+    const { data: h } = await supabase.from('households').select('invite_code, fridge_shape_id').eq('id', hid).single();
 
-    // 旧 household の realtime を解除してから新しいものに切り替え
     if (channelRef.current) {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
@@ -180,7 +180,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setRooms([]);
     setIngredients([]);
     setHouseholdId(hid);
-    setInviteCode((h as { invite_code: string } | null)?.invite_code ?? code.toUpperCase());
+    const hData = h as { invite_code: string; fridge_shape_id: string } | null;
+    setInviteCode(hData?.invite_code ?? code.toUpperCase());
+    setHouseholdShape(hData?.fridge_shape_id ?? 'standard');
     setMemberRole('member');
     await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid)]);
     subscribeRealtime(hid);
@@ -188,10 +190,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
-  const updateRoomName = useCallback(async (type: RoomId, name: string) => {
+  const updateRoomName = useCallback(async (position: RoomId, name: string) => {
     if (!householdId) return;
-    setRooms(prev => prev.map(r => r.type === type ? { ...r, name } : r));
-    const { error } = await supabase.from('rooms').update({ name }).eq('type', type).eq('household_id', householdId);
+    setRooms(prev => prev.map(r => r.position === position ? { ...r, name } : r));
+    const { error } = await supabase.from('rooms').update({ name }).eq('position', position).eq('household_id', householdId);
     if (error) { console.error('[Supabase] updateRoomName:', error.message); fetchRooms(householdId); }
   }, [householdId, fetchRooms]);
 
@@ -219,7 +221,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      userId, householdId, inviteCode, memberCount, memberRole,
+      userId, householdId, inviteCode, memberCount, memberRole, householdShape,
       createHousehold, joinHousehold,
       rooms, ingredients, loading,
       updateRoomName, addIngredient, updateIngredient, removeIngredient,

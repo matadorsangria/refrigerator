@@ -1,6 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useApp } from '../../store/AppContext';
-import { RoomId } from '../../types';
 import { IngredientForm } from '../../components/IngredientForm';
 
 export default function NewIngredientScreen() {
@@ -11,7 +10,7 @@ export default function NewIngredientScreen() {
   return (
     <IngredientForm
       title="食材を追加"
-      initialRoomId={(defaultRoomId as RoomId) ?? 'fridge'}
+      initialRoomId={defaultRoomId ? parseInt(defaultRoomId, 10) : 1}
       onSave={(name, roomId, expiresAt) => {
         addIngredient(name, roomId, expiresAt);
         router.back();

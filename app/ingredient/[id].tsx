@@ -1,7 +1,6 @@
 import { View, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useApp } from '../../store/AppContext';
-import { RoomId } from '../../types';
 import { IngredientForm } from '../../components/IngredientForm';
 
 function parseDate(str?: string): Date | undefined {
@@ -25,7 +24,7 @@ export default function EditIngredientScreen() {
     <IngredientForm
       title="食材を編集"
       initialName={ingredient.name}
-      initialRoomId={ingredient.roomId as RoomId}
+      initialRoomId={ingredient.roomId}
       initialExpiresAt={parseDate(ingredient.expiresAt)}
       onSave={(name, roomId, expiresAt) => {
         updateIngredient(id, name, roomId, expiresAt);
