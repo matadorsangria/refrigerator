@@ -150,7 +150,7 @@ export default function SharingScreen() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {householdId && inviteCode
           ? <InHouseholdView inviteCode={inviteCode} memberCount={memberCount} memberRole={memberRole} />
           : <NoHouseholdView />
