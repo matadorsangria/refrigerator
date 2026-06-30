@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#C6C6C8',
   },
-  roomChipSelected: { backgroundColor: '#007AFF', borderColor: '#007AFF' },
+  roomChipSelected: { backgroundColor: '#a3cdfa', borderColor: '#a3cdfa' },
   roomChipText: { fontSize: 14, color: '#333' },
   roomChipTextSelected: { color: '#fff', fontWeight: '600' },
   dateInput: {
