@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../store/AppContext';
@@ -27,6 +28,7 @@ type Props = {
 
 export function IngredientForm({ title, initialName = '', initialRoomId = 'fridge', initialExpiresAt, onSave, onCancel }: Props) {
   const { rooms } = useApp();
+  const { top } = useSafeAreaInsets();
 
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
@@ -81,7 +83,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 'fridg
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <View style={styles.header}>
+      <View style={[styles.header, Platform.OS === 'android' && { paddingTop: top, height: top + 56 }]}>
         <Pressable style={styles.headerCancel} onPress={onCancel}>
           <Text style={styles.headerCancelText}>キャンセル</Text>
         </Pressable>
