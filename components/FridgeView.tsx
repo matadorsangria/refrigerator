@@ -19,6 +19,11 @@ type CellProps = {
 
 function Cell({ room, style, onPress, onLongPress }: CellProps) {
   if (!room) return <View style={[styles.cell, style]} />;
+  if (!room.active) return (
+    <View style={[styles.cell, style]}>
+      <Text style={styles.cellLabel}>{room.name}</Text>
+    </View>
+  );
   return (
     <Pressable
       style={({ pressed }) => [styles.cell, style, pressed && styles.cellPressed]}

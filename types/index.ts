@@ -4,6 +4,7 @@ export type Room = {
   id: string;       // UUID (DB PK)
   position: RoomId; // 上から順番の番号
   name: string;
+  active: boolean;
 };
 
 export type Ingredient = {

@@ -126,7 +126,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
 
         <Text style={styles.label}>場所</Text>
         <View style={styles.roomGrid}>
-          {rooms.map(room => (
+          {rooms.filter(r => r.active).map(room => (
             <Pressable
               key={room.position}
               style={[styles.roomChip, room.position === selectedRoomId && styles.roomChipSelected]}

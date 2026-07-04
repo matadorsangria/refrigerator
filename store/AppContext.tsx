@@ -30,7 +30,7 @@ type AppContextType = {
   removeShoppingItem: (id: string) => Promise<void>;
 };
 
-type DbRoom = { id: string; position: number; name: string; household_id: string };
+type DbRoom = { id: string; position: number; name: string; active: boolean; household_id: string };
 type DbIngredient = { id: string; name: string; room_id: number; expires_at: string | null; created_at: string; household_id: string };
 type DbShoppingItem = { id: string; name: string; household_id: string; created_at: string };
 type MemberRole = 'creator' | 'member';
@@ -38,7 +38,7 @@ type MemberRole = 'creator' | 'member';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function toRoom(r: DbRoom): Room {
-  return { id: r.id, position: r.position, name: r.name };
+  return { id: r.id, position: r.position, name: r.name, active: r.active };
 }
 
 function toIngredient(i: DbIngredient): Ingredient {
