@@ -17,6 +17,14 @@ function formatDateJa(date: Date): string {
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
+const ROOM_COLORS: Record<number, { bg: string; border: string }> = {
+  1: { bg: '#EBF5FB', border: '#A9CCE3' },
+  2: { bg: '#EAFAF1', border: '#A9DFBF' },
+  4: { bg: '#D6EAF8', border: '#A9CCE3' },
+  5: { bg: '#C5E2F5', border: '#85C1E9' },
+  6: { bg: '#FEF3E2', border: '#F5A623' },
+};
+
 type Props = {
   title: string;
   initialName?: string;
@@ -144,17 +152,26 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
 
         <Text style={styles.label}>場所</Text>
         <View style={styles.roomGrid}>
-          {rooms.filter(r => r.active).map(room => (
-            <Pressable
-              key={room.position}
-              style={[styles.roomChip, room.position === selectedRoomId && styles.roomChipSelected]}
-              onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.position); }}
-            >
-              <Text style={[styles.roomChipText, room.position === selectedRoomId && styles.roomChipTextSelected]}>
-                {room.name}
-              </Text>
-            </Pressable>
-          ))}
+          {rooms.filter(r => r.active).map(room => {
+            const selected = room.position === selectedRoomId;
+            const color = ROOM_COLORS[room.position];
+            return (
+              <Pressable
+                key={room.position}
+                style={[
+                  styles.roomChip,
+                  selected && (color
+                    ? { backgroundColor: color.bg, borderColor: color.border }
+                    : styles.roomChipSelected),
+                ]}
+                onPress={() => { Keyboard.dismiss(); setSelectedRoomId(room.position); }}
+              >
+                <Text style={[styles.roomChipText, selected && styles.roomChipTextSelected]}>
+                  {room.name}
+                </Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         <Text style={styles.label}>賞味期限</Text>
@@ -274,7 +291,7 @@ const styles = StyleSheet.create({
   },
   roomChipSelected: { backgroundColor: '#a3cdfa', borderColor: '#a3cdfa' },
   roomChipText: { fontSize: 14, color: '#333' },
-  roomChipTextSelected: { color: '#fff', fontWeight: '600' },
+  roomChipTextSelected: { color: '#333', fontWeight: '600' },
   dateInput: {
     flexDirection: 'row',
     alignItems: 'center',
