@@ -32,6 +32,12 @@
         "projectId": "67d9b62e-f574-48b9-822b-c0131bb7bfcc"
       }
     },
-    "owner": "matadorsangria"
+    "owner": "matadorsangria",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/67d9b62e-f574-48b9-822b-c0131bb7bfcc"
+    }
   }
 }
