@@ -35,6 +35,7 @@ function AddModal({ visible, onClose }: { visible: boolean; onClose: () => void 
             placeholder="例：牛乳"
             autoFocus
             returnKeyType="done"
+            returnKeyLabel="完了"
             onSubmitEditing={handleAdd}
             autoComplete="off"
           />

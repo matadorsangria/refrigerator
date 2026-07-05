@@ -22,25 +22,32 @@ type Props = {
   initialName?: string;
   initialRoomId?: RoomId;
   initialPurchasedAt?: Date;
+  initialStorageDays?: number;
   initialExpiresAt?: Date;
-  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => void;
+  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number) => void;
   onCancel: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialPurchasedAt, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
+  const nameInputRef = useRef<TextInput>(null);
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
   const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt);
+  const [storageDays, setStorageDays] = useState(initialStorageDays != null ? String(initialStorageDays) : '');
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
   const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | null>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!initialName) setTimeout(() => nameInputRef.current?.focus(), 50);
+  }, []);
 
   useEffect(() => {
     if (pickerFor !== null) {
@@ -88,7 +95,8 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       setNameError('名前を入力してください');
       return;
     }
-    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined);
+    const days = storageDays.trim() ? parseInt(storageDays, 10) : undefined;
+    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days);
   };
 
   return (
@@ -120,12 +128,13 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       >
         <Text style={styles.label}>名前</Text>
         <TextInput
+          ref={nameInputRef}
           style={styles.input}
           value={name}
           onChangeText={v => { setName(v); setNameError(''); }}
           placeholder="例：牛乳"
-          autoFocus={!initialName}
           returnKeyType="done"
+          returnKeyLabel="完了"
           autoComplete="off"
           importantForAutofill="no"
           contextMenuHidden={true}
@@ -163,6 +172,23 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           </Text>
           <Ionicons name="calendar-outline" size={18} color="#aaa" />
         </Pressable>
+
+        {purchasedAt && (
+          <>
+            <Text style={styles.label}>保存期限</Text>
+            <View style={styles.storageDaysRow}>
+              <TextInput
+                style={styles.storageDaysInput}
+                value={storageDays}
+                onChangeText={v => setStorageDays(v.replace(/[^0-9]/g, ''))}
+                keyboardType="number-pad"
+                returnKeyType="done"
+                returnKeyLabel="完了"
+              />
+              <Text style={styles.storageDaysUnit}>日</Text>
+            </View>
+          </>
+        )}
 
         <Pressable style={styles.saveButton} onPress={handleSave}>
           <Ionicons name="checkmark" size={18} color="#fff" />
@@ -300,4 +326,16 @@ const styles = StyleSheet.create({
   clearText: { fontSize: 15, color: '#E74C3C' },
   confirmText: { fontSize: 15, color: '#007AFF', fontWeight: '600' },
   datePicker: { alignSelf: 'center' },
+  storageDaysRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  storageDaysInput: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#C6C6C8',
+  },
+  storageDaysUnit: { fontSize: 16, color: '#333' },
 });
