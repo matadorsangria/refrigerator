@@ -40,11 +40,28 @@ export function statusColor(status: ExpiryStatus): string {
   }
 }
 
+export function resolveExpiry(item: { expiresAt?: string; purchasedAt?: string; storageDays?: number }): string | undefined {
+  if (item.expiresAt) return item.expiresAt;
+  if (item.purchasedAt != null && item.storageDays != null) {
+    const d = new Date(item.purchasedAt);
+    d.setDate(d.getDate() + item.storageDays);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  return undefined;
+}
+
+function effectiveExpiry(item: Ingredient): number | null {
+  const s = resolveExpiry(item);
+  return s ? new Date(s).getTime() : null;
+}
+
 export function sortByExpiry(items: Ingredient[]): Ingredient[] {
   return [...items].sort((a, b) => {
-    if (!a.expiresAt && !b.expiresAt) return 0;
-    if (!a.expiresAt) return 1;
-    if (!b.expiresAt) return -1;
-    return new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime();
+    const ea = effectiveExpiry(a);
+    const eb = effectiveExpiry(b);
+    if (ea === null && eb === null) return 0;
+    if (ea === null) return 1;
+    if (eb === null) return -1;
+    return ea - eb;
   });
 }

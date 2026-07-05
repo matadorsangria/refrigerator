@@ -50,6 +50,8 @@ export default function RoomScreen() {
           <IngredientItem
             name={item.name}
             expiresAt={item.expiresAt}
+            purchasedAt={item.purchasedAt}
+            storageDays={item.storageDays}
             roomName={room?.name}
             onPress={() => router.push(`/ingredient/${item.id}`)}
           />

@@ -29,6 +29,8 @@ export default function IngredientsScreen() {
           <IngredientItem
             name={item.name}
             expiresAt={item.expiresAt}
+            purchasedAt={item.purchasedAt}
+            storageDays={item.storageDays}
             roomName={rooms.find(r => r.position === item.roomId)?.name}
             onPress={() => router.push(`/ingredient/${item.id}`)}
           />

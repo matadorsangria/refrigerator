@@ -1,16 +1,19 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { formatExpiry, getExpiryStatus, statusColor } from '../utils/expiry';
+import { formatExpiry, getExpiryStatus, statusColor, resolveExpiry } from '../utils/expiry';
 
 type Props = {
   name: string;
   expiresAt?: string;
+  purchasedAt?: string;
+  storageDays?: number;
   roomName?: string;
   onPress?: () => void;
 };
 
-export function IngredientItem({ name, expiresAt, roomName, onPress }: Props) {
-  const label = formatExpiry(expiresAt);
-  const status = getExpiryStatus(expiresAt);
+export function IngredientItem({ name, expiresAt, purchasedAt, storageDays, roomName, onPress }: Props) {
+  const effective = resolveExpiry({ expiresAt, purchasedAt, storageDays });
+  const label = formatExpiry(effective);
+  const status = getExpiryStatus(effective);
 
   return (
     <Pressable style={styles.item} onPress={onPress}>
