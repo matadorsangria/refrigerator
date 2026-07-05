@@ -13,15 +13,16 @@ type Props = {
 type CellProps = {
   room: Room | undefined;
   style?: object;
+  labelStyle?: object;
   onPress: () => void;
   onLongPress: () => void;
 };
 
-function Cell({ room, style, onPress, onLongPress }: CellProps) {
+function Cell({ room, style, labelStyle, onPress, onLongPress }: CellProps) {
   if (!room) return <View style={[styles.cell, style]} />;
   if (!room.active) return (
     <View style={[styles.cell, style]}>
-      <Text style={styles.cellLabel}>{room.name}</Text>
+      <Text style={[styles.cellLabel, labelStyle]}>{room.name}</Text>
     </View>
   );
   return (
@@ -30,12 +31,12 @@ function Cell({ room, style, onPress, onLongPress }: CellProps) {
       onPress={onPress}
       onLongPress={onLongPress}
     >
-      <Text style={styles.cellLabel}>{room.name}</Text>
+      <Text style={[styles.cellLabel, labelStyle]}>{room.name}</Text>
     </Pressable>
   );
 }
 
-// 'standard' 形状: 上から position 1〜5
+// 'standard' 形状: 上から position 1〜5、冷蔵庫外に 6=常温
 function StandardFridgeView({ rooms, onPress, onLongPress }: Omit<Props, 'shape'>) {
   const get = (position: number) => rooms.find(r => r.position === position);
   const cell = (position: number) => {
@@ -48,14 +49,29 @@ function StandardFridgeView({ rooms, onPress, onLongPress }: Omit<Props, 'shape'
   };
 
   return (
-    <View style={[styles.fridge, { height: FRIDGE_HEIGHT }]}>
-      <Cell {...cell(1)} style={{ flex: 4, backgroundColor: '#EBF5FB' }} />
-      <Cell {...cell(2)} style={{ flex: 2, backgroundColor: '#EAFAF1' }} />
-      <View style={styles.row}>
-        <Cell {...cell(3)} style={{ flex: 1, backgroundColor: '#D6EAF8', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: '#A9CCE3' }} />
-        <Cell {...cell(4)} style={{ flex: 1, backgroundColor: '#D6EAF8' }} />
+    <View style={styles.wrapper}>
+      <View style={[styles.fridge, { height: FRIDGE_HEIGHT }]}>
+        <Cell {...cell(1)} style={{ flex: 4, backgroundColor: '#EBF5FB' }} />
+        <Cell {...cell(2)} style={{ flex: 2, backgroundColor: '#EAFAF1' }} />
+        <View style={styles.row}>
+          <Cell {...cell(3)} style={{ flex: 1, backgroundColor: '#D6EAF8', borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: '#A9CCE3' }} />
+          <Cell {...cell(4)} style={{ flex: 1, backgroundColor: '#D6EAF8' }} />
+        </View>
+        <Cell {...cell(5)} style={{ flex: 2, backgroundColor: '#C5E2F5' }} />
       </View>
-      <Cell {...cell(5)} style={{ flex: 2, backgroundColor: '#C5E2F5' }} />
+      <Cell
+        {...cell(6)}
+        style={{
+          height: 60,
+          backgroundColor: '#FEF3E2',
+          borderRadius: 10,
+          borderWidth: 2,
+          borderBottomWidth: 2,
+          borderColor: '#F5A623',
+          borderBottomColor: '#F5A623',
+        }}
+        labelStyle={{ color: '#B7570A' }}
+      />
     </View>
   );
 }
@@ -67,12 +83,15 @@ export function FridgeView({ shape, rooms, onPress, onLongPress }: Props) {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    marginHorizontal: 24,
+    gap: 10,
+  },
   fridge: {
     borderWidth: 2,
     borderColor: '#5DADE2',
     borderRadius: 10,
     overflow: 'hidden',
-    marginHorizontal: 24,
   },
   row: {
     flex: 2,
