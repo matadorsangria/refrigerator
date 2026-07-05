@@ -22,8 +22,8 @@ type AppContextType = {
   loading: boolean;
   // CRUD
   updateRoomName: (position: RoomId, name: string) => Promise<void>;
-  addIngredient: (name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
-  updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string) => Promise<void>;
+  addIngredient: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => Promise<void>;
+  updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
   shoppingItems: ShoppingItem[];
   addShoppingItem: (name: string) => Promise<void>;
@@ -31,7 +31,7 @@ type AppContextType = {
 };
 
 type DbRoom = { id: string; position: number; name: string; active: boolean; household_id: string };
-type DbIngredient = { id: string; name: string; room_id: number; expires_at: string | null; created_at: string; household_id: string };
+type DbIngredient = { id: string; name: string; room_id: number; expires_at: string | null; purchased_at: string | null; created_at: string; household_id: string };
 type DbShoppingItem = { id: string; name: string; household_id: string; created_at: string };
 type MemberRole = 'creator' | 'member';
 
@@ -42,7 +42,7 @@ function toRoom(r: DbRoom): Room {
 }
 
 function toIngredient(i: DbIngredient): Ingredient {
-  return { id: i.id, name: i.name, roomId: i.room_id, expiresAt: i.expires_at ?? undefined };
+  return { id: i.id, name: i.name, roomId: i.room_id, purchasedAt: i.purchased_at ?? undefined, expiresAt: i.expires_at ?? undefined };
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
@@ -210,18 +210,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (error) { console.error('[Supabase] updateRoomName:', error.message); fetchRooms(householdId); }
   }, [householdId, fetchRooms]);
 
-  const addIngredient = useCallback(async (name: string, roomId: RoomId, expiresAt?: string) => {
+  const addIngredient = useCallback(async (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => {
     if (!householdId) return;
     const id = Date.now().toString();
-    setIngredients(prev => [...prev, { id, name, roomId, expiresAt }]);
-    const { error } = await supabase.from('ingredients').insert({ id, name, room_id: roomId, expires_at: expiresAt ?? null, household_id: householdId });
+    setIngredients(prev => [...prev, { id, name, roomId, purchasedAt, expiresAt }]);
+    const { error } = await supabase.from('ingredients').insert({ id, name, room_id: roomId, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null, household_id: householdId });
     if (error) { console.error('[Supabase] addIngredient:', error.message); fetchIngredients(householdId); }
   }, [householdId, fetchIngredients]);
 
-  const updateIngredient = useCallback(async (id: string, name: string, roomId: RoomId, expiresAt?: string) => {
+  const updateIngredient = useCallback(async (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => {
     if (!householdId) return;
-    setIngredients(prev => prev.map(i => i.id === id ? { ...i, name, roomId, expiresAt } : i));
-    const { error } = await supabase.from('ingredients').update({ name, room_id: roomId, expires_at: expiresAt ?? null }).eq('id', id).eq('household_id', householdId);
+    setIngredients(prev => prev.map(i => i.id === id ? { ...i, name, roomId, purchasedAt, expiresAt } : i));
+    const { error } = await supabase.from('ingredients').update({ name, room_id: roomId, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null }).eq('id', id).eq('household_id', householdId);
     if (error) { console.error('[Supabase] updateIngredient:', error.message); fetchIngredients(householdId); }
   }, [householdId, fetchIngredients]);
 

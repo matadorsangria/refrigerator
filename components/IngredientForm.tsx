@@ -21,27 +21,29 @@ type Props = {
   title: string;
   initialName?: string;
   initialRoomId?: RoomId;
+  initialPurchasedAt?: Date;
   initialExpiresAt?: Date;
-  onSave: (name: string, roomId: RoomId, expiresAt?: string) => void;
+  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string) => void;
   onCancel: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialPurchasedAt, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
+  const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt);
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | null>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (showDatePicker) {
+    if (pickerFor !== null) {
       slideAnim.setValue(500);
       overlayOpacity.setValue(0);
       Animated.parallel([
@@ -49,29 +51,36 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
         Animated.timing(overlayOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
       ]).start();
     }
-  }, [showDatePicker]);
+  }, [pickerFor]);
 
   const closeModal = (callback?: () => void) => {
     Animated.parallel([
       Animated.timing(slideAnim, { toValue: 500, duration: 250, useNativeDriver: true }),
       Animated.timing(overlayOpacity, { toValue: 0, duration: 250, useNativeDriver: true }),
     ]).start(() => {
-      setShowDatePicker(false);
+      setPickerFor(null);
       callback?.();
     });
   };
 
-  const openPicker = () => {
-    setTempDate(expiresAt ?? new Date());
-    setShowDatePicker(true);
+  const openPicker = (target: 'purchase' | 'expiry') => {
+    const current = target === 'expiry' ? expiresAt : purchasedAt;
+    setTempDate(current ?? new Date());
+    setPickerFor(target);
   };
 
   const handleConfirm = () => {
-    closeModal(() => setExpiresAt(tempDate));
+    closeModal(() => {
+      if (pickerFor === 'expiry') setExpiresAt(tempDate);
+      else if (pickerFor === 'purchase') setPurchasedAt(tempDate);
+    });
   };
 
   const handleClear = () => {
-    closeModal(() => setExpiresAt(undefined));
+    closeModal(() => {
+      if (pickerFor === 'expiry') setExpiresAt(undefined);
+      else if (pickerFor === 'purchase') setPurchasedAt(undefined);
+    });
   };
 
   const handleSave = () => {
@@ -79,7 +88,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       setNameError('名前を入力してください');
       return;
     }
-    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined);
+    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined);
   };
 
   return (
@@ -140,9 +149,17 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
         </View>
 
         <Text style={styles.label}>賞味期限</Text>
-        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker(); }}>
+        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('expiry'); }}>
           <Text style={[styles.dateInputText, !expiresAt && styles.dateInputPlaceholder]}>
             {expiresAt ? formatDateJa(expiresAt) : '未設定'}
+          </Text>
+          <Ionicons name="calendar-outline" size={18} color="#aaa" />
+        </Pressable>
+
+        <Text style={styles.label}>購入日</Text>
+        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
+          <Text style={[styles.dateInputText, !purchasedAt && styles.dateInputPlaceholder]}>
+            {purchasedAt ? formatDateJa(purchasedAt) : '未設定'}
           </Text>
           <Ionicons name="calendar-outline" size={18} color="#aaa" />
         </Pressable>
@@ -154,7 +171,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       </ScrollView>
 
       <Modal
-        visible={showDatePicker}
+        visible={pickerFor !== null}
         transparent
         animationType="none"
         onRequestClose={() => closeModal()}
