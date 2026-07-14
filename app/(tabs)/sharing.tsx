@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet,
-  ActivityIndicator, Share, ScrollView,
+  ActivityIndicator, Share, ScrollView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -109,25 +109,29 @@ function NoHouseholdView() {
 
   return (
     <>
-      <Text style={styles.sectionTitle}>グループを始める</Text>
-      <Text style={styles.description}>
-        グループを作成して招待コードを発行するか、招待コードを入力して既存のグループに参加できます。
-      </Text>
+      {Platform.OS !== 'web' && (
+        <>
+          <Text style={styles.sectionTitle}>グループを始める</Text>
+          <Text style={styles.description}>
+            グループを作成して招待コードを発行するか、招待コードを入力して既存のグループに参加できます。
+          </Text>
 
-      <Pressable style={[styles.primaryBtn, creating && styles.btnDisabled]} onPress={handleCreate} disabled={creating}>
-        {creating
-          ? <ActivityIndicator color="#fff" size="small" />
-          : <Ionicons name="add-circle-outline" size={18} color="#fff" />
-        }
-        <Text style={styles.primaryBtnText}>新しいグループを作成</Text>
-      </Pressable>
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          <Pressable style={[styles.primaryBtn, creating && styles.btnDisabled]} onPress={handleCreate} disabled={creating}>
+            {creating
+              ? <ActivityIndicator color="#fff" size="small" />
+              : <Ionicons name="add-circle-outline" size={18} color="#fff" />
+            }
+            <Text style={styles.primaryBtnText}>新しいグループを作成</Text>
+          </Pressable>
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <View style={styles.orRow}>
-        <View style={styles.orLine} />
-        <Text style={styles.orText}>または</Text>
-        <View style={styles.orLine} />
-      </View>
+          <View style={styles.orRow}>
+            <View style={styles.orLine} />
+            <Text style={styles.orText}>または</Text>
+            <View style={styles.orLine} />
+          </View>
+        </>
+      )}
 
       <JoinSection />
     </>
