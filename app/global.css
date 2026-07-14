@@ -1,0 +1,4 @@
+/* Web タブバーの <a> タグ padding 調整 */
+[role="tablist"] a {
+  padding-bottom: 0;
+}

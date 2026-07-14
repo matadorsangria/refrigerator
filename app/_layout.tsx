@@ -1,6 +1,8 @@
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { AppProvider, useApp } from '../store/AppContext';
+
+if (Platform.OS === 'web') require('./global.css');
 
 function AppStack() {
   const { loading } = useApp();
