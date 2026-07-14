@@ -1,5 +1,8 @@
-import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
+import { Platform } from 'react-native';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '../../store/AppContext';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -10,6 +13,17 @@ function tabIcon(active: IconName, inactive: IconName) {
 }
 
 export default function TabLayout() {
+  const { householdId, loading } = useApp();
+  const router = useRouter();
+  const segments = useSegments();
+  const restricted = Platform.OS === 'web' && !householdId;
+
+  useEffect(() => {
+    if (restricted && !loading && !segments.includes('settings')) {
+      router.replace('/settings');
+    }
+  }, [restricted, loading, segments]);
+
   return (
     <Tabs>
       <Tabs.Screen
@@ -18,6 +32,7 @@ export default function TabLayout() {
           title: 'ホーム',
           headerShown: false,
           tabBarIcon: tabIcon('home', 'home-outline'),
+          href: restricted ? null : undefined,
         }}
       />
       <Tabs.Screen
@@ -26,6 +41,7 @@ export default function TabLayout() {
           title: '食材',
           headerShown: false,
           tabBarIcon: tabIcon('nutrition', 'nutrition-outline'),
+          href: restricted ? null : undefined,
         }}
         listeners={({ navigation }) => ({
           tabPress: (e) => {
@@ -40,6 +56,7 @@ export default function TabLayout() {
           title: '買うもの',
           headerShown: false,
           tabBarIcon: tabIcon('cart', 'cart-outline'),
+          href: restricted ? null : undefined,
         }}
       />
       <Tabs.Screen
