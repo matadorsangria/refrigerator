@@ -2,6 +2,7 @@ import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Updates from 'expo-updates';
 import { useApp } from '../../store/AppContext';
 
 function Row({ icon, label, value, chevron = true, onPress }: {
@@ -40,19 +41,23 @@ export default function SettingsScreen() {
         <Text style={styles.headerTitle}>設定</Text>
       </View>
 
-      {Platform.OS === 'web' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>アプリ</Text>
-          <View style={styles.card}>
-            <Row
-              icon="refresh-outline"
-              label="再読み込み"
-              chevron={false}
-              onPress={() => window.location.reload()}
-            />
-          </View>
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>アプリ</Text>
+        <View style={styles.card}>
+          <Row
+            icon="refresh-outline"
+            label="再読み込み"
+            chevron={false}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.reload();
+              } else {
+                Updates.reloadAsync();
+              }
+            }}
+          />
         </View>
-      )}
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>共有</Text>
