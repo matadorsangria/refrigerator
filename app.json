@@ -20,7 +20,12 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "display": "standalone",
+      "backgroundColor": "#ffffff",
+      "themeColor": "#ffffff",
+      "name": "冷蔵庫",
+      "shortName": "冷蔵庫"
     },
     "plugins": [
       "expo-router",
