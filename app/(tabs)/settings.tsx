@@ -1,13 +1,14 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../store/AppContext';
 
-function Row({ icon, label, value, onPress }: {
+function Row({ icon, label, value, chevron = true, onPress }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   value?: string;
+  chevron?: boolean;
   onPress: () => void;
 }) {
   return (
@@ -18,7 +19,7 @@ function Row({ icon, label, value, onPress }: {
       </View>
       <View style={styles.rowRight}>
         {value ? <Text style={styles.rowValue}>{value}</Text> : null}
-        <Ionicons name="chevron-forward" size={16} color="#C6C6C8" />
+        {chevron && <Ionicons name="chevron-forward" size={16} color="#C6C6C8" />}
       </View>
     </Pressable>
   );
@@ -38,6 +39,20 @@ export default function SettingsScreen() {
       <View style={[styles.header, { paddingTop: top, height: top + 44 }]}>
         <Text style={styles.headerTitle}>設定</Text>
       </View>
+
+      {Platform.OS === 'web' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>アプリ</Text>
+          <View style={styles.card}>
+            <Row
+              icon="refresh-outline"
+              label="再読み込み"
+              chevron={false}
+              onPress={() => window.location.reload()}
+            />
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>共有</Text>
