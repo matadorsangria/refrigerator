@@ -1,5 +1,6 @@
 import { View, ActivityIndicator, Platform } from 'react-native';
 import { Stack } from 'expo-router';
+import Head from 'expo-router/head';
 import { AppProvider, useApp } from '../store/AppContext';
 
 if (Platform.OS === 'web') require('./global.css');
@@ -26,6 +27,9 @@ function AppStack() {
 export default function RootLayout() {
   return (
     <AppProvider>
+      <Head>
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </Head>
       <AppStack />
     </AppProvider>
   );
