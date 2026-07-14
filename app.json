@@ -38,6 +38,7 @@
       }
     },
     "owner": "matadorsangria",
+    "access": "public",
     "runtimeVersion": {
       "policy": "appVersion"
     },
