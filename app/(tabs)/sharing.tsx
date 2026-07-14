@@ -6,7 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useApp } from '../store/AppContext';
+import { useApp } from '../../store/AppContext';
 
 // ─── 招待コード入力 UI（共通）────────────────────────────────────────────────
 

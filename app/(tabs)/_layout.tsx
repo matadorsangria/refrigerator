@@ -58,6 +58,14 @@ export default function TabLayout() {
           tabBarIcon: tabIcon('settings', 'settings-outline'),
         }}
       />
+      <Tabs.Screen
+        name="sharing"
+        options={{
+          title: '共有',
+          headerShown: false,
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
