@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Tabs, useRouter, useSegments } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../store/AppContext';
 
@@ -13,16 +12,8 @@ function tabIcon(active: IconName, inactive: IconName) {
 }
 
 export default function TabLayout() {
-  const { householdId, loading } = useApp();
-  const router = useRouter();
-  const segments = useSegments();
+  const { householdId } = useApp();
   const restricted = Platform.OS === 'web' && !householdId;
-
-  useEffect(() => {
-    if (restricted && !loading && !segments.includes('settings')) {
-      router.replace('/settings');
-    }
-  }, [restricted, loading, segments]);
 
   return (
     <Tabs>

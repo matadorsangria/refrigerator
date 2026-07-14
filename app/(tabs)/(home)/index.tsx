@@ -1,12 +1,14 @@
-import { Alert, View, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Alert, View, StyleSheet, Platform } from 'react-native';
+import { useRouter, Redirect } from 'expo-router';
 import { FridgeView } from '../../../components/FridgeView';
 import { useApp } from '../../../store/AppContext';
 import { Room } from '../../../types';
 
 export default function HomeScreen() {
-  const { rooms, householdShape, updateRoomName } = useApp();
+  const { rooms, householdShape, updateRoomName, householdId } = useApp();
   const router = useRouter();
+
+  if (Platform.OS === 'web' && !householdId) return <Redirect href="/settings" />;
 
   const handlePress = (room: Room) => {
     router.push(`/room/${room.id}`);
