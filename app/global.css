@@ -1,3 +1,8 @@
+/* Safari のスクロールによるブラウザUI出現を抑制 */
+html, body {
+  overscroll-behavior: none;
+}
+
 /* Web タブバーの <a> タグ padding 調整 */
 [role="tablist"] a {
   padding-bottom: 0;
