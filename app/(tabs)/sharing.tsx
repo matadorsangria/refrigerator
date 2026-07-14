@@ -143,7 +143,7 @@ export default function SharingScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: top }]}>
+      <View style={[styles.header, { paddingTop: top, height: top + 44 }]}>
         <Text style={styles.headerTitle}>共有設定</Text>
         <Pressable onPress={() => router.back()} style={styles.closeBtn} hitSlop={8}>
           <Ionicons name="close" size={22} color="#3C3C43" />
@@ -164,16 +164,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F2F2F7' },
   header: {
     backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: 12,
+    justifyContent: 'flex-end',
+    paddingBottom: 10,
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#C6C6C8',
   },
-  headerTitle: { fontSize: 17, fontWeight: '600', color: '#000' },
-  closeBtn: { position: 'absolute', right: 16, bottom: 12 },
+  headerTitle: { fontSize: 17, fontWeight: '600', textAlign: 'center', color: '#000' },
+  closeBtn: { position: 'absolute', right: 16, bottom: 10 },
   content: { padding: 20, gap: 12 },
   sectionTitle: { fontSize: 20, fontWeight: '700', color: '#000', marginBottom: 4 },
   description: { fontSize: 14, color: '#6C6C70', lineHeight: 20 },
