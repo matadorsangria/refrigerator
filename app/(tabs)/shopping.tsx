@@ -81,7 +81,6 @@ export default function ShoppingScreen() {
       <FlatList
         data={shoppingItems}
         keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
         ListEmptyComponent={<Text style={styles.empty}>買うものがありません</Text>}
         renderItem={({ item }) => (
           <View style={styles.item}>
@@ -127,13 +126,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 8,
   },
-  listContent: { paddingVertical: 6, paddingHorizontal: 16 },
   empty: { textAlign: 'center', color: '#aaa', marginTop: 40 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#eee',
   },

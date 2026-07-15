@@ -1,4 +1,5 @@
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,13 +8,13 @@ import { sortByExpiry } from '../../../utils/expiry';
 import { IngredientItem, ingredientListStyles } from '../../../components/IngredientItem';
 
 export default function IngredientsScreen() {
-  const { rooms, ingredients } = useApp();
+  const { rooms, ingredients, removeIngredient } = useApp();
   const router = useRouter();
   const { top } = useSafeAreaInsets();
   const sorted = sortByExpiry(ingredients);
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <View style={[styles.header, { paddingTop: top, height: top + 44 }]}>
         <Text style={styles.headerTitle}>食材</Text>
         <Pressable style={styles.headerAdd} onPress={() => router.push('/ingredient/new')}>
@@ -33,10 +34,11 @@ export default function IngredientsScreen() {
             storageDays={item.storageDays}
             roomName={rooms.find(r => r.position === item.roomId)?.name}
             onPress={() => router.push(`/ingredient/${item.id}`)}
+            onDelete={() => removeIngredient(item.id)}
           />
         )}
       />
-    </View>
+    </GestureHandlerRootView>
   );
 }
 

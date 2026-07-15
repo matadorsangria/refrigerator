@@ -1,4 +1,5 @@
 import { Pressable, View, Text, FlatList, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,7 +25,7 @@ function RoomHeader({ title, onBack, onAdd }: { title: string; onBack: () => voi
 
 export default function RoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { rooms, ingredients } = useApp();
+  const { rooms, ingredients, removeIngredient } = useApp();
   const router = useRouter();
   const navigation = useNavigation();
 
@@ -32,7 +33,7 @@ export default function RoomScreen() {
   const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.position));
 
   return (
-    <>
+    <GestureHandlerRootView style={styles.container}>
       <Stack.Screen options={{ headerShown: false, animation: 'none' }} />
       <RoomHeader
         title={room?.name ?? '食材'}
@@ -43,7 +44,6 @@ export default function RoomScreen() {
         style={styles.list}
         data={sorted}
         keyExtractor={item => item.id}
-        contentContainerStyle={ingredientListStyles.content}
         automaticallyAdjustContentInsets={false}
         ListEmptyComponent={<Text style={ingredientListStyles.empty}>食材がありません</Text>}
         renderItem={({ item }) => (
@@ -54,10 +54,11 @@ export default function RoomScreen() {
             storageDays={item.storageDays}
             roomName={room?.name}
             onPress={() => router.push(`/ingredient/${item.id}`)}
+            onDelete={() => removeIngredient(item.id)}
           />
         )}
       />
-    </>
+    </GestureHandlerRootView>
   );
 }
 
@@ -88,5 +89,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingRight: 8,
   },
+  container: { flex: 1, backgroundColor: '#fff' },
   list: { flex: 1, backgroundColor: '#fff' },
 });
