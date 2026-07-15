@@ -45,7 +45,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
-  const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt);
+  const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt ?? new Date());
   const [storageDays, setStorageDays] = useState(initialStorageDays != null ? String(initialStorageDays) : '');
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
   const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | null>(null);
