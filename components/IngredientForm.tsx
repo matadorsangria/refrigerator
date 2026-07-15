@@ -174,14 +174,6 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           })}
         </View>
 
-        <Text style={styles.label}>賞味期限</Text>
-        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('expiry'); }}>
-          <Text style={[styles.dateInputText, !expiresAt && styles.dateInputPlaceholder]}>
-            {expiresAt ? formatDateJa(expiresAt) : '未設定'}
-          </Text>
-          <Ionicons name="calendar-outline" size={18} color="#aaa" />
-        </Pressable>
-
         <Text style={styles.label}>購入日</Text>
         <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
           <Text style={[styles.dateInputText, !purchasedAt && styles.dateInputPlaceholder]}>
@@ -206,6 +198,14 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
             </View>
           </>
         )}
+
+        <Text style={styles.label}>賞味期限</Text>
+        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('expiry'); }}>
+          <Text style={[styles.dateInputText, !expiresAt && styles.dateInputPlaceholder]}>
+            {expiresAt ? formatDateJa(expiresAt) : '未設定'}
+          </Text>
+          <Ionicons name="calendar-outline" size={18} color="#aaa" />
+        </Pressable>
 
         <Pressable style={styles.saveButton} onPress={handleSave}>
           <Ionicons name="checkmark" size={18} color="#fff" />
