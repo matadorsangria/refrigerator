@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, DevSettings } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,6 +51,8 @@ export default function SettingsScreen() {
             onPress={() => {
               if (Platform.OS === 'web') {
                 window.location.reload();
+              } else if (__DEV__) {
+                DevSettings.reload();
               } else {
                 Updates.reloadAsync();
               }
