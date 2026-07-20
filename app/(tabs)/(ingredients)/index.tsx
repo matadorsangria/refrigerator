@@ -29,6 +29,7 @@ export default function IngredientsScreen() {
         renderItem={({ item }) => (
           <IngredientItem
             name={item.name}
+            quantity={item.quantity}
             expiresAt={item.expiresAt}
             purchasedAt={item.purchasedAt}
             storageDays={item.storageDays}

@@ -6,6 +6,7 @@ import { formatExpiry, getExpiryStatus, statusColor, resolveExpiry } from '../ut
 
 type Props = {
   name: string;
+  quantity?: number;
   expiresAt?: string;
   purchasedAt?: string;
   storageDays?: number;
@@ -14,7 +15,7 @@ type Props = {
   onDelete?: () => void;
 };
 
-export function IngredientItem({ name, expiresAt, purchasedAt, storageDays, roomName, onPress, onDelete }: Props) {
+export function IngredientItem({ name, quantity, expiresAt, purchasedAt, storageDays, roomName, onPress, onDelete }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
   const effective = resolveExpiry({ expiresAt, purchasedAt, storageDays });
   const label = formatExpiry(effective);
@@ -40,7 +41,9 @@ export function IngredientItem({ name, expiresAt, purchasedAt, storageDays, room
       overshootRight={false}
     >
       <Pressable style={styles.item} onPress={onPress}>
-        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.name}>
+          {name}{quantity != null ? ` ${quantity}個` : ''}
+        </Text>
         <View style={styles.meta}>
           {label !== '' && (
             <Text style={[styles.expiry, { color: statusColor(status) }]}>{label}</Text>

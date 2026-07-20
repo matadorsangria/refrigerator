@@ -1,10 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated, Alert } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../store/AppContext';
 import { RoomId } from '../types';
+
+const QUANTITY_VALUES = Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5);
 
 function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -29,15 +32,16 @@ type Props = {
   title: string;
   initialName?: string;
   initialRoomId?: RoomId;
+  initialQuantity?: number;
   initialPurchasedAt?: Date;
   initialStorageDays?: number;
   initialExpiresAt?: Date;
-  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number) => void;
+  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number) => void;
   onCancel: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialQuantity, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
@@ -45,11 +49,13 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
+  const [quantity, setQuantity] = useState<number>(initialQuantity ?? 1);
   const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt ?? new Date());
   const [storageDays, setStorageDays] = useState(initialStorageDays != null ? String(initialStorageDays) : '');
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
-  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | null>(null);
+  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | 'quantity' | null>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
+  const [tempQuantity, setTempQuantity] = useState<number>(1);
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -78,9 +84,13 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
     });
   };
 
-  const openPicker = (target: 'purchase' | 'expiry') => {
-    const current = target === 'expiry' ? expiresAt : purchasedAt;
-    setTempDate(current ?? new Date());
+  const openPicker = (target: 'purchase' | 'expiry' | 'quantity') => {
+    if (target === 'quantity') {
+      setTempQuantity(quantity);
+    } else {
+      const current = target === 'expiry' ? expiresAt : purchasedAt;
+      setTempDate(current ?? new Date());
+    }
     setPickerFor(target);
   };
 
@@ -88,6 +98,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
     closeModal(() => {
       if (pickerFor === 'expiry') setExpiresAt(tempDate);
       else if (pickerFor === 'purchase') setPurchasedAt(tempDate);
+      else if (pickerFor === 'quantity') setQuantity(tempQuantity);
     });
   };
 
@@ -104,7 +115,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       return;
     }
     const days = storageDays.trim() ? parseInt(storageDays, 10) : undefined;
-    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days);
+    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days, quantity);
   };
 
   return (
@@ -174,6 +185,12 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           })}
         </View>
 
+        <Text style={styles.label}>数量</Text>
+        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('quantity'); }}>
+          <Text style={styles.dateInputText}>{quantity % 1 === 0 ? `${quantity}` : `${quantity}`}</Text>
+          <Ionicons name="chevron-down" size={18} color="#aaa" />
+        </Pressable>
+
         <Text style={styles.label}>購入日</Text>
         <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
           <Text style={[styles.dateInputText, !purchasedAt && styles.dateInputPlaceholder]}>
@@ -224,21 +241,35 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => closeModal()} />
           <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.modalToolbar}>
-              <Pressable onPress={handleClear} style={styles.toolbarBtn}>
-                <Text style={styles.clearText}>クリア</Text>
-              </Pressable>
+              {pickerFor !== 'quantity' ? (
+                <Pressable onPress={handleClear} style={styles.toolbarBtn}>
+                  <Text style={styles.clearText}>クリア</Text>
+                </Pressable>
+              ) : <View style={styles.toolbarBtn} />}
               <Pressable onPress={handleConfirm} style={styles.toolbarBtn}>
                 <Text style={styles.confirmText}>決定</Text>
               </Pressable>
             </View>
-            <DateTimePicker
-              value={tempDate}
-              mode="date"
-              display="inline"
-              onChange={(_, date) => { if (date) setTempDate(date); }}
-              locale="ja"
-              style={styles.datePicker}
-            />
+            {pickerFor === 'quantity' ? (
+              <Picker
+                selectedValue={tempQuantity}
+                onValueChange={v => setTempQuantity(v)}
+                style={styles.quantityPicker}
+              >
+                {QUANTITY_VALUES.map(v => (
+                  <Picker.Item key={v} label={v % 1 === 0 ? `${v}` : `${v}`} value={v} />
+                ))}
+              </Picker>
+            ) : (
+              <DateTimePicker
+                value={tempDate}
+                mode="date"
+                display="inline"
+                onChange={(_, date) => { if (date) setTempDate(date); }}
+                locale="ja"
+                style={styles.datePicker}
+              />
+            )}
           </Animated.View>
         </View>
       </Modal>
@@ -343,6 +374,7 @@ const styles = StyleSheet.create({
   clearText: { fontSize: 15, color: '#E74C3C' },
   confirmText: { fontSize: 15, color: '#007AFF', fontWeight: '600' },
   datePicker: { alignSelf: 'center' },
+  quantityPicker: { width: '100%' },
   storageDaysRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   storageDaysInput: {
     flex: 1,

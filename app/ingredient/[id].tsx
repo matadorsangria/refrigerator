@@ -25,11 +25,12 @@ export default function EditIngredientScreen() {
       title="食材を編集"
       initialName={ingredient.name}
       initialRoomId={ingredient.roomId}
+      initialQuantity={ingredient.quantity}
       initialPurchasedAt={parseDate(ingredient.purchasedAt)}
       initialStorageDays={ingredient.storageDays}
       initialExpiresAt={parseDate(ingredient.expiresAt)}
-      onSave={(name, roomId, expiresAt, purchasedAt, storageDays) => {
-        updateIngredient(id, name, roomId, expiresAt, purchasedAt, storageDays);
+      onSave={(name, roomId, expiresAt, purchasedAt, storageDays, quantity) => {
+        updateIngredient(id, name, roomId, expiresAt, purchasedAt, storageDays, quantity);
         router.back();
       }}
       onCancel={() => router.back()}

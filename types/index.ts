@@ -11,6 +11,7 @@ export type Ingredient = {
   id: string;
   name: string;
   roomId: RoomId;
+  quantity?: number;
   purchasedAt?: string;
   storageDays?: number;
   expiresAt?: string;
