@@ -50,6 +50,7 @@ export default function RoomScreen() {
           <IngredientItem
             name={item.name}
             quantity={item.quantity}
+            unit={item.unit}
             expiresAt={item.expiresAt}
             purchasedAt={item.purchasedAt}
             storageDays={item.storageDays}

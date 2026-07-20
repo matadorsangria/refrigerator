@@ -8,6 +8,7 @@ import { useApp } from '../store/AppContext';
 import { RoomId } from '../types';
 
 const QUANTITY_VALUES = Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5);
+const UNIT_VALUES = ['個', '本', '枚', '束', '袋', 'パック'];
 
 function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -33,15 +34,16 @@ type Props = {
   initialName?: string;
   initialRoomId?: RoomId;
   initialQuantity?: number;
+  initialUnit?: string;
   initialPurchasedAt?: Date;
   initialStorageDays?: number;
   initialExpiresAt?: Date;
-  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number) => void;
+  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string) => void;
   onCancel: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialQuantity, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialQuantity, initialUnit, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
@@ -50,12 +52,14 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
   const [quantity, setQuantity] = useState<number>(initialQuantity ?? 1);
+  const [unit, setUnit] = useState<string>(initialUnit ?? '個');
   const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt ?? new Date());
   const [storageDays, setStorageDays] = useState(initialStorageDays != null ? String(initialStorageDays) : '');
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
-  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | 'quantity' | null>(null);
+  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | 'quantity' | 'unit' | null>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
   const [tempQuantity, setTempQuantity] = useState<number>(1);
+  const [tempUnit, setTempUnit] = useState<string>('個');
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -84,13 +88,10 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
     });
   };
 
-  const openPicker = (target: 'purchase' | 'expiry' | 'quantity') => {
-    if (target === 'quantity') {
-      setTempQuantity(quantity);
-    } else {
-      const current = target === 'expiry' ? expiresAt : purchasedAt;
-      setTempDate(current ?? new Date());
-    }
+  const openPicker = (target: 'purchase' | 'expiry' | 'quantity' | 'unit') => {
+    if (target === 'quantity') setTempQuantity(quantity);
+    else if (target === 'unit') setTempUnit(unit);
+    else setTempDate((target === 'expiry' ? expiresAt : purchasedAt) ?? new Date());
     setPickerFor(target);
   };
 
@@ -99,6 +100,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       if (pickerFor === 'expiry') setExpiresAt(tempDate);
       else if (pickerFor === 'purchase') setPurchasedAt(tempDate);
       else if (pickerFor === 'quantity') setQuantity(tempQuantity);
+      else if (pickerFor === 'unit') setUnit(tempUnit);
     });
   };
 
@@ -115,7 +117,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       return;
     }
     const days = storageDays.trim() ? parseInt(storageDays, 10) : undefined;
-    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days, quantity);
+    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days, quantity, unit);
   };
 
   return (
@@ -185,11 +187,17 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           })}
         </View>
 
-        <Text style={styles.label}>数量</Text>
-        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('quantity'); }}>
-          <Text style={styles.dateInputText}>{quantity % 1 === 0 ? `${quantity}` : `${quantity}`}</Text>
-          <Ionicons name="chevron-down" size={18} color="#aaa" />
-        </Pressable>
+        <Text style={styles.label}>数量 / 単位</Text>
+        <View style={styles.quantityRow}>
+          <Pressable style={[styles.dateInput, styles.quantityInput]} onPress={() => { Keyboard.dismiss(); openPicker('quantity'); }}>
+            <Text style={styles.dateInputText}>{quantity}</Text>
+            <Ionicons name="chevron-down" size={18} color="#aaa" />
+          </Pressable>
+          <Pressable style={[styles.dateInput, styles.unitInputFlex]} onPress={() => { Keyboard.dismiss(); openPicker('unit'); }}>
+            <Text style={styles.dateInputText}>{unit}</Text>
+            <Ionicons name="chevron-down" size={18} color="#aaa" />
+          </Pressable>
+        </View>
 
         <Text style={styles.label}>購入日</Text>
         <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
@@ -241,7 +249,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => closeModal()} />
           <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.modalToolbar}>
-              {pickerFor !== 'quantity' ? (
+              {pickerFor !== 'quantity' && pickerFor !== 'unit' ? (
                 <Pressable onPress={handleClear} style={styles.toolbarBtn}>
                   <Text style={styles.clearText}>クリア</Text>
                 </Pressable>
@@ -257,7 +265,17 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
                 style={styles.quantityPicker}
               >
                 {QUANTITY_VALUES.map(v => (
-                  <Picker.Item key={v} label={v % 1 === 0 ? `${v}` : `${v}`} value={v} />
+                  <Picker.Item key={v} label={`${v}`} value={v} />
+                ))}
+              </Picker>
+            ) : pickerFor === 'unit' ? (
+              <Picker
+                selectedValue={tempUnit}
+                onValueChange={v => setTempUnit(v)}
+                style={styles.quantityPicker}
+              >
+                {UNIT_VALUES.map(u => (
+                  <Picker.Item key={u} label={u} value={u} />
                 ))}
               </Picker>
             ) : (
@@ -375,6 +393,9 @@ const styles = StyleSheet.create({
   confirmText: { fontSize: 15, color: '#007AFF', fontWeight: '600' },
   datePicker: { alignSelf: 'center' },
   quantityPicker: { width: '100%' },
+  quantityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  quantityInput: { width: 90 },
+  unitInputFlex: { flex: 1 },
   storageDaysRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   storageDaysInput: {
     flex: 1,

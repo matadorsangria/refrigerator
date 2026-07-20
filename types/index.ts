@@ -12,6 +12,7 @@ export type Ingredient = {
   name: string;
   roomId: RoomId;
   quantity?: number;
+  unit?: string;
   purchasedAt?: string;
   storageDays?: number;
   expiresAt?: string;

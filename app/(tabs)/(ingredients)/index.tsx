@@ -30,6 +30,7 @@ export default function IngredientsScreen() {
           <IngredientItem
             name={item.name}
             quantity={item.quantity}
+            unit={item.unit}
             expiresAt={item.expiresAt}
             purchasedAt={item.purchasedAt}
             storageDays={item.storageDays}
