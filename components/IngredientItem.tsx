@@ -42,8 +42,8 @@ export function IngredientItem({ name, quantity, unit, expiresAt, purchasedAt, s
       overshootRight={false}
     >
       <Pressable style={styles.item} onPress={onPress}>
-        <Text style={styles.name}>
-          {name}{quantity != null ? ` ${quantity}${unit ?? '個'}` : ''}
+        <Text style={[styles.name, quantity === 0 && styles.nameLow]}>
+          {name}{quantity === 0 ? ' あと少し' : quantity != null ? ` ${quantity}${unit ?? '個'}` : ''}
         </Text>
         <View style={styles.meta}>
           {label !== '' && (
@@ -74,6 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   name: { fontSize: 16, color: '#333' },
+  nameLow: { color: '#E74C3C' },
   meta: { alignItems: 'flex-end', gap: 2 },
   expiry: { fontSize: 12, fontWeight: '500' },
   room: { fontSize: 11, color: '#aaa' },

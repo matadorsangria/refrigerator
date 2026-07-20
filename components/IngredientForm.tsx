@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../store/AppContext';
 import { RoomId } from '../types';
 
-const QUANTITY_VALUES = Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5);
+const QUANTITY_VALUES = [0, ...Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5)];
 const UNIT_VALUES = ['個', '本', '枚', '束', '袋', 'パック'];
 
 function toDateString(date: Date): string {
