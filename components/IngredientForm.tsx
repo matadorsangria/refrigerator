@@ -199,30 +199,33 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           </Pressable>
         </View>
 
-        <Text style={styles.label}>購入日</Text>
-        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
-          <Text style={[styles.dateInputText, !purchasedAt && styles.dateInputPlaceholder]}>
-            {purchasedAt ? formatDateJa(purchasedAt) : '未設定'}
-          </Text>
-          <Ionicons name="calendar-outline" size={18} color="#aaa" />
-        </Pressable>
-
-        {purchasedAt && (
-          <>
-            <Text style={styles.label}>保存期限</Text>
-            <View style={styles.storageDaysRow}>
-              <TextInput
-                style={styles.storageDaysInput}
-                value={storageDays}
-                onChangeText={v => setStorageDays(v.replace(/[^0-9]/g, ''))}
-                keyboardType="number-pad"
-                returnKeyType="done"
-                returnKeyLabel="完了"
-              />
-              <Text style={styles.storageDaysUnit}>日</Text>
+        <View style={styles.purchasedAtRow}>
+          <View style={[styles.purchasedAtCol, styles.purchasedAtColWide]}>
+            <Text style={styles.label}>購入日</Text>
+            <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('purchase'); }}>
+              <Text style={[styles.dateInputText, !purchasedAt && styles.dateInputPlaceholder]}>
+                {purchasedAt ? formatDateJa(purchasedAt) : '未設定'}
+              </Text>
+              <Ionicons name="calendar-outline" size={18} color="#aaa" />
+            </Pressable>
+          </View>
+          {purchasedAt && (
+            <View style={[styles.purchasedAtCol, styles.purchasedAtColNarrow]}>
+              <Text style={styles.label}>保存期限</Text>
+              <View style={styles.storageDaysRow}>
+                <TextInput
+                  style={styles.storageDaysInput}
+                  value={storageDays}
+                  onChangeText={v => setStorageDays(v.replace(/[^0-9]/g, ''))}
+                  keyboardType="number-pad"
+                  returnKeyType="done"
+                  returnKeyLabel="完了"
+                />
+                <Text style={styles.storageDaysUnit}>日</Text>
+              </View>
             </View>
-          </>
-        )}
+          )}
+        </View>
 
         <Text style={styles.label}>賞味期限</Text>
         <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('expiry'); }}>
@@ -396,6 +399,10 @@ const styles = StyleSheet.create({
   quantityRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   quantityInput: { width: 90 },
   unitInputFlex: { flex: 1 },
+  purchasedAtRow: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
+  purchasedAtCol: { gap: 6 },
+  purchasedAtColWide: { flex: 3 },
+  purchasedAtColNarrow: { flex: 2 },
   storageDaysRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   storageDaysInput: {
     flex: 1,
