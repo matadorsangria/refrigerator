@@ -8,17 +8,19 @@ type Props = {
   rooms: Room[];
   onPress: (room: Room) => void;
   onLongPress: (room: Room) => void;
+  badgeRoomPositions?: Set<number>;
 };
 
 type CellProps = {
   room: Room | undefined;
   style?: object;
   labelStyle?: object;
+  hasBadge?: boolean;
   onPress: () => void;
   onLongPress: () => void;
 };
 
-function Cell({ room, style, labelStyle, onPress, onLongPress }: CellProps) {
+function Cell({ room, style, labelStyle, hasBadge, onPress, onLongPress }: CellProps) {
   if (!room) return <View style={[styles.cell, style]} />;
   if (!room.active) return (
     <View style={[styles.cell, style]}>
@@ -31,18 +33,22 @@ function Cell({ room, style, labelStyle, onPress, onLongPress }: CellProps) {
       onPress={onPress}
       onLongPress={onLongPress}
     >
-      <Text style={[styles.cellLabel, labelStyle]}>{room.name}</Text>
+      <View style={styles.cellContent}>
+        <Text style={[styles.cellLabel, labelStyle]}>{room.name}</Text>
+        {hasBadge && <View style={styles.badge} />}
+      </View>
     </Pressable>
   );
 }
 
 // 'standard' 形状: 上から position 1〜5、冷蔵庫外に 6=常温
-function StandardFridgeView({ rooms, onPress, onLongPress }: Omit<Props, 'shape'>) {
+function StandardFridgeView({ rooms, onPress, onLongPress, badgeRoomPositions }: Omit<Props, 'shape'>) {
   const get = (position: number) => rooms.find(r => r.position === position);
   const cell = (position: number) => {
     const r = get(position);
     return {
       room: r,
+      hasBadge: badgeRoomPositions?.has(position) ?? false,
       onPress: () => { if (r) onPress(r); },
       onLongPress: () => { if (r) onLongPress(r); },
     };
@@ -76,9 +82,9 @@ function StandardFridgeView({ rooms, onPress, onLongPress }: Omit<Props, 'shape'
   );
 }
 
-export function FridgeView({ shape, rooms, onPress, onLongPress }: Props) {
+export function FridgeView({ shape, rooms, onPress, onLongPress, badgeRoomPositions }: Props) {
   return (
-    <StandardFridgeView rooms={rooms} onPress={onPress} onLongPress={onLongPress} />
+    <StandardFridgeView rooms={rooms} onPress={onPress} onLongPress={onLongPress} badgeRoomPositions={badgeRoomPositions} />
   );
 }
 
@@ -106,9 +112,20 @@ const styles = StyleSheet.create({
   cellPressed: {
     opacity: 0.6,
   },
+  cellContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   cellLabel: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1A5276',
+  },
+  badge: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E74C3C',
   },
 });

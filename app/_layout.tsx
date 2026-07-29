@@ -19,6 +19,7 @@ function AppStack() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="ingredient/new" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="ingredient/[id]" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="changelog" options={{ presentation: 'modal', headerShown: false }} />
     </Stack>
   );
 }

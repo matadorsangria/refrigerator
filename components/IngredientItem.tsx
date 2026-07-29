@@ -12,11 +12,12 @@ type Props = {
   purchasedAt?: string;
   storageDays?: number;
   roomName?: string;
+  badgeStatus?: 'add' | 'update';
   onPress?: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientItem({ name, quantity, unit, expiresAt, purchasedAt, storageDays, roomName, onPress, onDelete }: Props) {
+export function IngredientItem({ name, quantity, unit, expiresAt, purchasedAt, storageDays, roomName, badgeStatus, onPress, onDelete }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
   const effective = resolveExpiry({ expiresAt, purchasedAt, storageDays });
   const label = formatExpiry(effective);
@@ -42,9 +43,13 @@ export function IngredientItem({ name, quantity, unit, expiresAt, purchasedAt, s
       overshootRight={false}
     >
       <Pressable style={styles.item} onPress={onPress}>
-        <Text style={[styles.name, quantity === 0 && styles.nameLow]}>
-          {name}{quantity === 0 ? ' あと少し' : quantity != null ? ` ${quantity}${unit ?? '個'}` : ''}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={[styles.name, quantity === 0 && styles.nameLow]}>
+            {name}{quantity === 0 ? ' あと少し' : quantity != null ? ` ${quantity}${unit ?? '個'}` : ''}
+          </Text>
+          {badgeStatus === 'add' && <Text style={styles.badgeNew}>NEW!</Text>}
+          {badgeStatus === 'update' && <View style={[styles.badge, styles.badgeUpdate]} />}
+        </View>
         <View style={styles.meta}>
           {label !== '' && (
             <Text style={[styles.expiry, { color: statusColor(status) }]}>{label}</Text>
@@ -73,8 +78,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     backgroundColor: '#fff',
   },
-  name: { fontSize: 16, color: '#333' },
+  nameRow: { flexShrink: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { flexShrink: 1, minWidth: 0, fontSize: 16, color: '#333' },
   nameLow: { color: '#E74C3C' },
+  badgeNew: { fontSize: 14, fontWeight: '700', color: '#E74C3C' },
+  badge: { width: 8, height: 8, borderRadius: 4 },
+  badgeUpdate: { backgroundColor: '#F39C12' },
   meta: { alignItems: 'flex-end', gap: 2 },
   expiry: { fontSize: 12, fontWeight: '500' },
   room: { fontSize: 11, color: '#aaa' },

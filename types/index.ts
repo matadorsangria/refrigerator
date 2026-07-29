@@ -24,3 +24,15 @@ export type ShoppingItem = {
   id: string;
   name: string;
 };
+
+export type IngredientLog = {
+  id: string;
+  ingredientId: string | null;
+  ingredientName: string;
+  roomId: number | null;
+  action: 'add' | 'delete' | 'update';
+  quantity?: number;
+  unit?: string;
+  userId: string;
+  createdAt: string;
+};

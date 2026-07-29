@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useRouter } from 'expo-router';
+import { useRouter, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../../store/AppContext';
@@ -8,10 +9,18 @@ import { sortByExpiry } from '../../../utils/expiry';
 import { IngredientItem, ingredientListStyles } from '../../../components/IngredientItem';
 
 export default function IngredientsScreen() {
-  const { rooms, ingredients, removeIngredient } = useApp();
+  const { rooms, ingredients, removeIngredient, unreadByIngredientId, markLogsRead } = useApp();
   const router = useRouter();
+  const navigation = useNavigation();
   const { top } = useSafeAreaInsets();
   const sorted = sortByExpiry(ingredients);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      markLogsRead();
+    });
+    return unsubscribe;
+  }, [navigation, markLogsRead]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -24,7 +33,6 @@ export default function IngredientsScreen() {
       <FlatList
         data={sorted}
         keyExtractor={item => item.id}
-        contentContainerStyle={ingredientListStyles.content}
         ListEmptyComponent={<Text style={ingredientListStyles.empty}>食材がありません</Text>}
         renderItem={({ item }) => (
           <IngredientItem
@@ -35,6 +43,7 @@ export default function IngredientsScreen() {
             purchasedAt={item.purchasedAt}
             storageDays={item.storageDays}
             roomName={rooms.find(r => r.position === item.roomId)?.name}
+            badgeStatus={unreadByIngredientId[item.id]}
             onPress={() => router.push(`/ingredient/${item.id}`)}
             onDelete={() => removeIngredient(item.id)}
           />

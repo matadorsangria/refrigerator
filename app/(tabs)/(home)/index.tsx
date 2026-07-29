@@ -5,7 +5,7 @@ import { useApp } from '../../../store/AppContext';
 import { Room } from '../../../types';
 
 export default function HomeScreen() {
-  const { rooms, householdShape, updateRoomName, householdId } = useApp();
+  const { rooms, householdShape, updateRoomName, householdId, unreadRoomIds } = useApp();
   const router = useRouter();
 
   if (Platform.OS === 'web' && !householdId) return <Redirect href="/settings" />;
@@ -31,6 +31,7 @@ export default function HomeScreen() {
         rooms={rooms}
         onPress={handlePress}
         onLongPress={handleLongPress}
+        badgeRoomPositions={unreadRoomIds}
       />
     </View>
   );

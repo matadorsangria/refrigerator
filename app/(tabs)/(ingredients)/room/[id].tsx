@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Pressable, View, Text, FlatList, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
@@ -25,12 +26,19 @@ function RoomHeader({ title, onBack, onAdd }: { title: string; onBack: () => voi
 
 export default function RoomScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { rooms, ingredients, removeIngredient } = useApp();
+  const { rooms, ingredients, removeIngredient, unreadByIngredientId, markLogsRead } = useApp();
   const router = useRouter();
   const navigation = useNavigation();
 
   const room = rooms.find(r => r.id === id);
   const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.position));
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      markLogsRead();
+    });
+    return unsubscribe;
+  }, [navigation, markLogsRead]);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -55,6 +63,7 @@ export default function RoomScreen() {
             purchasedAt={item.purchasedAt}
             storageDays={item.storageDays}
             roomName={room?.name}
+            badgeStatus={unreadByIngredientId[item.id]}
             onPress={() => router.push(`/ingredient/${item.id}`)}
             onDelete={() => removeIngredient(item.id)}
           />

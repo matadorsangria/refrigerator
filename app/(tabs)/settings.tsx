@@ -45,6 +45,12 @@ export default function SettingsScreen() {
         <Text style={styles.sectionLabel}>アプリ</Text>
         <View style={styles.card}>
           <Row
+            icon="time-outline"
+            label="変更履歴"
+            onPress={() => router.push('/changelog')}
+          />
+          <View style={styles.divider} />
+          <Row
             icon="refresh-outline"
             label="再読み込み"
             chevron={false}
@@ -114,4 +120,5 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: 16, color: '#000' },
   rowRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowValue: { fontSize: 15, color: '#8E8E93' },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#C6C6C8', marginLeft: 48 },
 });
