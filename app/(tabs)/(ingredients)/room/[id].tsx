@@ -35,7 +35,7 @@ export default function RoomScreen() {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
-      markLogsRead();
+      if (room?.position != null) markLogsRead(room.position);
     });
     return unsubscribe;
   }, [navigation, markLogsRead]);

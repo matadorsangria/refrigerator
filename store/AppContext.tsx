@@ -30,7 +30,7 @@ type AppContextType = {
   removeShoppingItem: (id: string) => Promise<void>;
   // Changelog
   logs: IngredientLog[];
-  markLogsRead: () => Promise<void>;
+  markLogsRead: (roomId?: number) => Promise<void>;
   unreadByIngredientId: Record<string, 'add' | 'update'>;
   unreadRoomIds: Set<number>;
 };
@@ -70,7 +70,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]);
   const [logs, setLogs] = useState<IngredientLog[]>([]);
-  const [lastReadAt, setLastReadAt] = useState<string | null>(null);
+  const [readLogIds, setReadLogIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const appStateRef = useRef(AppState.currentState);
@@ -108,9 +108,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setLogs((data as DbIngredientLog[]).map(toLog));
   }, []);
 
-  const fetchLastRead = useCallback(async (hid: string, uid: string) => {
-    const { data } = await supabase.from('ingredient_log_reads').select('last_read_at').eq('household_id', hid).eq('user_id', uid).single();
-    setLastReadAt(data?.last_read_at ?? null);
+  const fetchReadLogIds = useCallback(async (uid: string) => {
+    const { data, error } = await supabase.from('ingredient_log_reads').select('log_id').eq('user_id', uid);
+    if (error) { console.error('[Supabase] fetchReadLogIds:', error.message); return; }
+    setReadLogIds(new Set((data ?? []).map((r: { log_id: string }) => r.log_id)));
   }, []);
 
   // ── realtime subscription ──────────────────────────────────────────────────
@@ -130,7 +131,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     channelRef.current = channel;
   }, [fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, fetchLogs]);
 
-  // ── init: sign in anonymously → load household ────────────────────────────
+  // ── init ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     let cancelled = false;
@@ -164,7 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setInviteCode(h?.invite_code ?? null);
         setHouseholdShape(h?.fridge_shape_id ?? 'standard');
         setMemberRole((memberRows.role as MemberRole) ?? 'member');
-        await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid), fetchShoppingItems(hid), fetchLogs(hid), fetchLastRead(hid, uid)]);
+        await Promise.all([fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid), fetchShoppingItems(hid), fetchLogs(hid), fetchReadLogIds(uid)]);
         if (!cancelled) subscribeRealtime(hid);
       }
 
@@ -173,7 +174,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     init();
     return () => { cancelled = true; };
-  }, [fetchRooms, fetchIngredients, fetchMemberCount, subscribeRealtime, fetchLogs, fetchLastRead]);
+  }, [fetchRooms, fetchIngredients, fetchMemberCount, subscribeRealtime, fetchLogs, fetchReadLogIds]);
 
   // ── foreground 復帰時にデータ再取得 ──────────────────────────────────────
 
@@ -185,12 +186,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetchMemberCount(householdId);
         fetchShoppingItems(householdId);
         fetchLogs(householdId);
-        if (userIdRef.current) fetchLastRead(householdId, userIdRef.current);
+        if (userIdRef.current) fetchReadLogIds(userIdRef.current);
       }
       appStateRef.current = next;
     });
     return () => sub.remove();
-  }, [householdId, fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, fetchLogs, fetchLastRead]);
+  }, [householdId, fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, fetchLogs, fetchReadLogIds]);
 
   // ── household operations ───────────────────────────────────────────────────
 
@@ -228,10 +229,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const uid = userIdRef.current;
     await Promise.all([
       fetchRooms(hid), fetchIngredients(hid), fetchMemberCount(hid), fetchShoppingItems(hid), fetchLogs(hid),
-      ...(uid ? [fetchLastRead(hid, uid)] : []),
+      ...(uid ? [fetchReadLogIds(uid)] : []),
     ]);
     subscribeRealtime(hid);
-  }, [fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, fetchLogs, fetchLastRead, subscribeRealtime]);
+  }, [fetchRooms, fetchIngredients, fetchMemberCount, fetchShoppingItems, fetchLogs, fetchReadLogIds, subscribeRealtime]);
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
 
@@ -291,21 +292,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── changelog / badges ────────────────────────────────────────────────────
 
-  const markLogsRead = useCallback(async () => {
-    if (!householdId || !userId) return;
-    const now = new Date().toISOString();
-    setLastReadAt(now);
-    await supabase.from('ingredient_log_reads').upsert(
-      { user_id: userId, household_id: householdId, last_read_at: now },
-      { onConflict: 'user_id,household_id' }
+  const markLogsRead = useCallback(async (roomId?: number) => {
+    if (!userId) return;
+    const toRead = logs.filter(l =>
+      l.userId !== userId &&
+      !readLogIds.has(l.id) &&
+      (roomId == null || l.roomId === roomId)
     );
-  }, [householdId, userId]);
+    if (toRead.length === 0) return;
+    const newIds = new Set([...readLogIds, ...toRead.map(l => l.id)]);
+    setReadLogIds(newIds);
+    await supabase.from('ingredient_log_reads').insert(toRead.map(l => ({ user_id: userId, log_id: l.id })));
+  }, [userId, logs, readLogIds]);
 
   const unreadByIngredientId = useMemo((): Record<string, 'add' | 'update'> => {
     const result: Record<string, 'add' | 'update'> = {};
     for (const log of logs) {
       if (log.userId === userId) continue;
-      if (lastReadAt && new Date(log.createdAt) <= new Date(lastReadAt)) continue;
+      if (readLogIds.has(log.id)) continue;
       if (!log.ingredientId) continue;
       if (log.action === 'add') {
         result[log.ingredientId] = 'add';
@@ -314,17 +318,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
     return result;
-  }, [logs, userId, lastReadAt]);
+  }, [logs, userId, readLogIds]);
 
   const unreadRoomIds = useMemo((): Set<number> => {
     const ids = new Set<number>();
     for (const log of logs) {
       if (log.userId === userId) continue;
-      if (lastReadAt && new Date(log.createdAt) <= new Date(lastReadAt)) continue;
+      if (readLogIds.has(log.id)) continue;
       if (log.roomId != null) ids.add(log.roomId);
     }
     return ids;
-  }, [logs, userId, lastReadAt]);
+  }, [logs, userId, readLogIds]);
 
   return (
     <AppContext.Provider value={{
