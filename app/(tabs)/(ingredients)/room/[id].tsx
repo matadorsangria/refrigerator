@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { Pressable, View, Text, FlatList, StyleSheet } from 'react-native';
+import { Pressable, View, Text, SectionList, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack, useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../../../store/AppContext';
-import { sortByExpiry } from '../../../../utils/expiry';
+import { groupByCategory } from '../../../../utils/categories';
 import { IngredientItem, ingredientListStyles } from '../../../../components/IngredientItem';
 
 function RoomHeader({ title, onBack, onAdd }: { title: string; onBack: () => void; onAdd: () => void }) {
@@ -31,7 +31,7 @@ export default function RoomScreen() {
   const navigation = useNavigation();
 
   const room = rooms.find(r => r.id === id);
-  const sorted = sortByExpiry(ingredients.filter(i => i.roomId === room?.position));
+  const sections = groupByCategory(ingredients.filter(i => i.roomId === room?.position));
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
@@ -48,12 +48,15 @@ export default function RoomScreen() {
         onBack={() => navigation.getParent()?.navigate('(home)' as never)}
         onAdd={() => router.push({ pathname: '/ingredient/new', params: { roomId: room?.position } })}
       />
-      <FlatList
+      <SectionList
         style={styles.list}
-        data={sorted}
+        sections={sections}
         keyExtractor={item => item.id}
         automaticallyAdjustContentInsets={false}
         ListEmptyComponent={<Text style={ingredientListStyles.empty}>食材がありません</Text>}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionHeader}>{section.title}</Text>
+        )}
         renderItem={({ item }) => (
           <IngredientItem
             name={item.name}
@@ -102,4 +105,14 @@ const styles = StyleSheet.create({
   },
   container: { flex: 1, backgroundColor: '#fff' },
   list: { flex: 1, backgroundColor: '#fff' },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6C6C70',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#F2F2F7',
+  },
 });

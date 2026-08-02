@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
-import { View, Text, Pressable, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Pressable, SectionList, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useRouter, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../../../store/AppContext';
-import { sortByExpiry } from '../../../utils/expiry';
+import { groupByCategory } from '../../../utils/categories';
 import { IngredientItem, ingredientListStyles } from '../../../components/IngredientItem';
 
 export default function IngredientsScreen() {
@@ -13,7 +13,7 @@ export default function IngredientsScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { top } = useSafeAreaInsets();
-  const sorted = sortByExpiry(ingredients);
+  const sections = groupByCategory(ingredients);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('blur', () => {
@@ -30,10 +30,13 @@ export default function IngredientsScreen() {
           <Ionicons name="add" size={26} color="#007AFF" />
         </Pressable>
       </View>
-      <FlatList
-        data={sorted}
+      <SectionList
+        sections={sections}
         keyExtractor={item => item.id}
         ListEmptyComponent={<Text style={ingredientListStyles.empty}>食材がありません</Text>}
+        renderSectionHeader={({ section }) => (
+          <Text style={styles.sectionHeader}>{section.title}</Text>
+        )}
         renderItem={({ item }) => (
           <IngredientItem
             name={item.name}
@@ -55,6 +58,16 @@ export default function IngredientsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  sectionHeader: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6C6C70',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#F2F2F7',
+  },
   header: {
     backgroundColor: '#fff',
     flexDirection: 'row',

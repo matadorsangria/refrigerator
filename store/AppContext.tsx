@@ -22,8 +22,8 @@ type AppContextType = {
   loading: boolean;
   // CRUD
   updateRoomName: (position: RoomId, name: string) => Promise<void>;
-  addIngredient: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string) => Promise<void>;
-  updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string) => Promise<void>;
+  addIngredient: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string, category?: string) => Promise<void>;
+  updateIngredient: (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string, category?: string) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
   shoppingItems: ShoppingItem[];
   addShoppingItem: (name: string) => Promise<void>;
@@ -36,7 +36,7 @@ type AppContextType = {
 };
 
 type DbRoom = { id: string; position: number; name: string; active: boolean; household_id: string };
-type DbIngredient = { id: string; name: string; room_id: number; quantity: number | null; unit: string; expires_at: string | null; purchased_at: string | null; storage_days: number | null; created_at: string; household_id: string };
+type DbIngredient = { id: string; name: string; room_id: number; category: string; quantity: number | null; unit: string; expires_at: string | null; purchased_at: string | null; storage_days: number | null; created_at: string; household_id: string };
 type DbShoppingItem = { id: string; name: string; household_id: string; created_at: string };
 type DbIngredientLog = { id: string; household_id: string; ingredient_id: string | null; ingredient_name: string; room_id: number | null; action: 'add' | 'delete' | 'update'; quantity: number | null; unit: string | null; user_id: string; created_at: string };
 type MemberRole = 'creator' | 'member';
@@ -48,7 +48,7 @@ function toRoom(r: DbRoom): Room {
 }
 
 function toIngredient(i: DbIngredient): Ingredient {
-  return { id: i.id, name: i.name, roomId: i.room_id, quantity: i.quantity ?? undefined, unit: i.unit, purchasedAt: i.purchased_at ?? undefined, storageDays: i.storage_days ?? undefined, expiresAt: i.expires_at ?? undefined };
+  return { id: i.id, name: i.name, roomId: i.room_id, category: i.category, quantity: i.quantity ?? undefined, unit: i.unit, purchasedAt: i.purchased_at ?? undefined, storageDays: i.storage_days ?? undefined, expiresAt: i.expires_at ?? undefined };
 }
 
 function toLog(l: DbIngredientLog): IngredientLog {
@@ -243,21 +243,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (error) { console.error('[Supabase] updateRoomName:', error.message); fetchRooms(householdId); }
   }, [householdId, fetchRooms]);
 
-  const addIngredient = useCallback(async (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit: string = '個') => {
+  const addIngredient = useCallback(async (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit: string = '個', category: string = 'その他') => {
     if (!householdId || !userId) return;
     const id = Date.now().toString();
-    setIngredients(prev => [...prev, { id, name, roomId, quantity, unit, purchasedAt, storageDays, expiresAt }]);
-    const { error } = await supabase.from('ingredients').insert({ id, name, room_id: roomId, quantity: quantity ?? null, unit, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null, storage_days: storageDays ?? null, household_id: householdId });
+    setIngredients(prev => [...prev, { id, name, roomId, category, quantity, unit, purchasedAt, storageDays, expiresAt }]);
+    const { error } = await supabase.from('ingredients').insert({ id, name, room_id: roomId, category, quantity: quantity ?? null, unit, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null, storage_days: storageDays ?? null, household_id: householdId });
     if (error) { console.error('[Supabase] addIngredient:', error.message); fetchIngredients(householdId); return; }
     await supabase.from('ingredient_logs').insert({ household_id: householdId, ingredient_id: id, ingredient_name: name, room_id: roomId, action: 'add', quantity: quantity ?? null, unit, user_id: userId });
   }, [householdId, userId, fetchIngredients]);
 
-  const updateIngredient = useCallback(async (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit: string = '個') => {
+  const updateIngredient = useCallback(async (id: string, name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit: string = '個', category: string = 'その他') => {
     if (!householdId || !userId) return;
     const existing = ingredients.find(i => i.id === id);
     const quantityChanged = existing?.quantity !== quantity;
-    setIngredients(prev => prev.map(i => i.id === id ? { ...i, name, roomId, quantity, unit, purchasedAt, storageDays, expiresAt } : i));
-    const { error } = await supabase.from('ingredients').update({ name, room_id: roomId, quantity: quantity ?? null, unit, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null, storage_days: storageDays ?? null }).eq('id', id).eq('household_id', householdId);
+    setIngredients(prev => prev.map(i => i.id === id ? { ...i, name, roomId, category, quantity, unit, purchasedAt, storageDays, expiresAt } : i));
+    const { error } = await supabase.from('ingredients').update({ name, room_id: roomId, category, quantity: quantity ?? null, unit, expires_at: expiresAt ?? null, purchased_at: purchasedAt ?? null, storage_days: storageDays ?? null }).eq('id', id).eq('household_id', householdId);
     if (error) { console.error('[Supabase] updateIngredient:', error.message); fetchIngredients(householdId); return; }
     if (quantityChanged) {
       await supabase.from('ingredient_logs').insert({ household_id: householdId, ingredient_id: id, ingredient_name: name, room_id: roomId, action: 'update', quantity: quantity ?? null, unit, user_id: userId });
