@@ -9,6 +9,7 @@ import { RoomId } from '../types';
 
 const QUANTITY_VALUES = [0, ...Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5)];
 const UNIT_VALUES = ['個', '本', '枚', '束', '袋', 'パック'];
+export const CATEGORY_VALUES = ['肉・魚・卵', '大豆製品', '乳製品', '野菜', '果物', 'パン・ご飯・麺', 'スイーツ', '飲料', '冷凍食品', '缶詰・瓶詰', '乾物・粉類', '調味料', 'その他'];
 
 function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -33,17 +34,18 @@ type Props = {
   title: string;
   initialName?: string;
   initialRoomId?: RoomId;
+  initialCategory?: string;
   initialQuantity?: number;
   initialUnit?: string;
   initialPurchasedAt?: Date;
   initialStorageDays?: number;
   initialExpiresAt?: Date;
-  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string) => void;
+  onSave: (name: string, roomId: RoomId, expiresAt?: string, purchasedAt?: string, storageDays?: number, quantity?: number, unit?: string, category?: string) => void;
   onCancel: () => void;
   onDelete?: () => void;
 };
 
-export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialQuantity, initialUnit, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
+export function IngredientForm({ title, initialName = '', initialRoomId = 1, initialCategory, initialQuantity, initialUnit, initialPurchasedAt, initialStorageDays, initialExpiresAt, onSave, onCancel, onDelete }: Props) {
   const { rooms, addShoppingItem } = useApp();
   const { top } = useSafeAreaInsets();
 
@@ -51,15 +53,17 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
   const [name, setName] = useState(initialName);
   const [nameError, setNameError] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState<RoomId>(initialRoomId);
+  const [category, setCategory] = useState<string>(initialCategory ?? '');
   const [quantity, setQuantity] = useState<number>(initialQuantity ?? 1);
   const [unit, setUnit] = useState<string>(initialUnit ?? '個');
   const [purchasedAt, setPurchasedAt] = useState<Date | undefined>(initialPurchasedAt ?? new Date());
   const [storageDays, setStorageDays] = useState(initialStorageDays != null ? String(initialStorageDays) : '');
   const [expiresAt, setExpiresAt] = useState<Date | undefined>(initialExpiresAt);
-  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | 'quantity' | 'unit' | null>(null);
+  const [pickerFor, setPickerFor] = useState<'purchase' | 'expiry' | 'quantity' | 'unit' | 'category' | null>(null);
   const [tempDate, setTempDate] = useState<Date>(new Date());
   const [tempQuantity, setTempQuantity] = useState<number>(1);
   const [tempUnit, setTempUnit] = useState<string>('個');
+  const [tempCategory, setTempCategory] = useState<string>('その他');
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -88,9 +92,10 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
     });
   };
 
-  const openPicker = (target: 'purchase' | 'expiry' | 'quantity' | 'unit') => {
+  const openPicker = (target: 'purchase' | 'expiry' | 'quantity' | 'unit' | 'category') => {
     if (target === 'quantity') setTempQuantity(quantity);
     else if (target === 'unit') setTempUnit(unit);
+    else if (target === 'category') setTempCategory(category || CATEGORY_VALUES[0]);
     else setTempDate((target === 'expiry' ? expiresAt : purchasedAt) ?? new Date());
     setPickerFor(target);
   };
@@ -101,6 +106,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       else if (pickerFor === 'purchase') setPurchasedAt(tempDate);
       else if (pickerFor === 'quantity') setQuantity(tempQuantity);
       else if (pickerFor === 'unit') setUnit(tempUnit);
+      else if (pickerFor === 'category') { setCategory(tempCategory); setCategoryError(''); }
     });
   };
 
@@ -111,13 +117,19 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
     });
   };
 
+  const [categoryError, setCategoryError] = useState('');
+
   const handleSave = () => {
     if (!name.trim()) {
       setNameError('名前を入力してください');
       return;
     }
+    if (!category) {
+      setCategoryError('カテゴリを選択してください');
+      return;
+    }
     const days = storageDays.trim() ? parseInt(storageDays, 10) : undefined;
-    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days, quantity, unit);
+    onSave(name.trim(), selectedRoomId, expiresAt ? toDateString(expiresAt) : undefined, purchasedAt ? toDateString(purchasedAt) : undefined, days, quantity, unit, category);
   };
 
   return (
@@ -187,6 +199,15 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           })}
         </View>
 
+        <Text style={styles.label}>カテゴリ</Text>
+        <Pressable style={styles.dateInput} onPress={() => { Keyboard.dismiss(); openPicker('category'); }}>
+          <Text style={[styles.dateInputText, !category && styles.dateInputPlaceholder]}>
+            {category || '選択してください'}
+          </Text>
+          <Ionicons name="chevron-down" size={18} color="#aaa" />
+        </Pressable>
+        {categoryError ? <Text style={styles.errorText}>{categoryError}</Text> : null}
+
         <Text style={styles.label}>数量 / 単位</Text>
         <View style={styles.quantityRow}>
           <Pressable style={[styles.dateInput, styles.quantityInput]} onPress={() => { Keyboard.dismiss(); openPicker('quantity'); }}>
@@ -252,7 +273,7 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => closeModal()} />
           <Animated.View style={[styles.modalSheet, { transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.modalToolbar}>
-              {pickerFor !== 'quantity' && pickerFor !== 'unit' ? (
+              {pickerFor !== 'quantity' && pickerFor !== 'unit' && pickerFor !== 'category' ? (
                 <Pressable onPress={handleClear} style={styles.toolbarBtn}>
                   <Text style={styles.clearText}>クリア</Text>
                 </Pressable>
@@ -279,6 +300,16 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
               >
                 {UNIT_VALUES.map(u => (
                   <Picker.Item key={u} label={u} value={u} />
+                ))}
+              </Picker>
+            ) : pickerFor === 'category' ? (
+              <Picker
+                selectedValue={tempCategory}
+                onValueChange={v => setTempCategory(v)}
+                style={styles.quantityPicker}
+              >
+                {CATEGORY_VALUES.map(c => (
+                  <Picker.Item key={c} label={c} value={c} />
                 ))}
               </Picker>
             ) : (

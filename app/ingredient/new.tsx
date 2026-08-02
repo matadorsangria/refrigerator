@@ -12,8 +12,8 @@ export default function NewIngredientScreen() {
       title="食材を追加"
       initialName={defaultName}
       initialRoomId={defaultRoomId ? parseInt(defaultRoomId, 10) : 1}
-      onSave={(name, roomId, expiresAt, purchasedAt, storageDays, quantity, unit) => {
-        addIngredient(name, roomId, expiresAt, purchasedAt, storageDays, quantity, unit);
+      onSave={(name, roomId, expiresAt, purchasedAt, storageDays, quantity, unit, category) => {
+        addIngredient(name, roomId, expiresAt, purchasedAt, storageDays, quantity, unit, category);
         router.back();
       }}
       onCancel={() => router.back()}
