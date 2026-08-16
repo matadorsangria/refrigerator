@@ -9,6 +9,7 @@
     "@react-native-picker/picker": "2.11.1",
     "@supabase/supabase-js": "^2.108.2",
     "expo": "~54.0.0",
+    "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.13",
     "expo-linking": "~8.0.12",
     "expo-router": "~6.0.24",

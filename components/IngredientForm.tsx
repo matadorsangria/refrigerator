@@ -1,15 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
-import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated, Alert } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform, Modal, Keyboard, Animated, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../store/AppContext';
+import { supabase } from '../lib/supabase';
 import { RoomId } from '../types';
 
 const QUANTITY_VALUES = [0, ...Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5)];
 const UNIT_VALUES = ['個', '本', '枚', '束', '袋', 'パック'];
 export const CATEGORY_VALUES = ['肉・魚・卵', '大豆製品', '乳製品', '野菜', '果物', 'パン・ご飯・麺', 'スイーツ', '飲料', '冷凍食品', '缶詰・瓶詰', '乾物・粉類', '調味料', 'その他'];
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const FRAME_SIZE = Math.round(SCREEN_WIDTH * 0.65);
+const FRAME_LEFT = (SCREEN_WIDTH - FRAME_SIZE) / 2;
+const FRAME_TOP = (SCREEN_HEIGHT - FRAME_SIZE) / 2 - 60;
 
 function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -64,6 +71,10 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
   const [tempQuantity, setTempQuantity] = useState<number>(1);
   const [tempUnit, setTempUnit] = useState<string>('個');
   const [tempCategory, setTempCategory] = useState<string>('その他');
+  const [showCamera, setShowCamera] = useState(false);
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const scannedRef = useRef(false);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const slideAnim = useRef(new Animated.Value(500)).current;
   const overlayOpacity = useRef(new Animated.Value(0)).current;
 
@@ -119,6 +130,40 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
 
   const [categoryError, setCategoryError] = useState('');
 
+  const handleOpenCamera = async () => {
+    Keyboard.dismiss();
+    if (!cameraPermission?.granted) {
+      const result = await requestCameraPermission();
+      if (!result.granted) {
+        Alert.alert('カメラへのアクセスが必要です', '設定からカメラの使用を許可してください');
+        return;
+      }
+    }
+    scannedRef.current = false;
+    setShowCamera(true);
+  };
+
+  const handleBarcodeScan = async ({ data }: { data: string }) => {
+    if (scannedRef.current) return;
+    scannedRef.current = true;
+    setIsLookingUp(true);
+    try {
+      const { data: result, error } = await supabase.functions.invoke('lookup-barcode', { body: { barcode: data } });
+      setShowCamera(false);
+      setIsLookingUp(false);
+      if (error || !result?.name) {
+        Alert.alert('商品が見つかりませんでした');
+        return;
+      }
+      setName(result.name);
+      setNameError('');
+    } catch {
+      setShowCamera(false);
+      setIsLookingUp(false);
+      Alert.alert('商品が見つかりませんでした');
+    }
+  };
+
   const handleSave = () => {
     if (!name.trim()) {
       setNameError('名前を入力してください');
@@ -150,7 +195,9 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
             <Ionicons name="trash-outline" size={22} color="#E74C3C" />
           </Pressable>
         ) : (
-          <View style={styles.headerCancel} />
+          <Pressable style={styles.headerCancel} onPress={handleOpenCamera}>
+            <Ionicons name="barcode-outline" size={26} color="#007AFF" />
+          </Pressable>
         )}
       </View>
       <ScrollView
@@ -325,6 +372,43 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
           </Animated.View>
         </View>
       </Modal>
+      <Modal visible={showCamera} animationType="slide" statusBarTranslucent onRequestClose={() => setShowCamera(false)}>
+        <View style={styles.cameraContainer}>
+          <CameraView
+            style={StyleSheet.absoluteFillObject}
+            facing="back"
+            onBarcodeScanned={handleBarcodeScan}
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'] }}
+          />
+          {/* 暗幕オーバーレイ（フレーム外） */}
+          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, height: FRAME_TOP, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          <View style={{ position: 'absolute', top: FRAME_TOP + FRAME_SIZE, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          <View style={{ position: 'absolute', top: FRAME_TOP, left: 0, width: FRAME_LEFT, height: FRAME_SIZE, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          <View style={{ position: 'absolute', top: FRAME_TOP, left: FRAME_LEFT + FRAME_SIZE, right: 0, height: FRAME_SIZE, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          {/* スキャン枠（コーナーブラケット） */}
+          <View style={{ position: 'absolute', top: FRAME_TOP, left: FRAME_LEFT, width: FRAME_SIZE, height: FRAME_SIZE }}>
+            <View style={[styles.corner, { top: 0, left: 0, borderTopWidth: 3, borderLeftWidth: 3 }]} />
+            <View style={[styles.corner, { top: 0, right: 0, borderTopWidth: 3, borderRightWidth: 3 }]} />
+            <View style={[styles.corner, { bottom: 0, left: 0, borderBottomWidth: 3, borderLeftWidth: 3 }]} />
+            <View style={[styles.corner, { bottom: 0, right: 0, borderBottomWidth: 3, borderRightWidth: 3 }]} />
+          </View>
+          {/* 案内テキスト */}
+          <View style={{ position: 'absolute', top: FRAME_TOP + FRAME_SIZE + 28, left: 0, right: 0, alignItems: 'center' }}>
+            <Text style={styles.cameraHint}>バーコードをフレーム内に合わせてください</Text>
+          </View>
+          {/* 閉じるボタン */}
+          <Pressable style={styles.cameraClose} onPress={() => setShowCamera(false)}>
+            <Ionicons name="close" size={28} color="#fff" />
+          </Pressable>
+          {/* ルックアップ中のローディング */}
+          {isLookingUp && (
+            <View style={styles.lookingUpOverlay}>
+              <ActivityIndicator size="large" color="#fff" />
+              <Text style={styles.lookingUpText}>商品を検索中...</Text>
+            </View>
+          )}
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -446,4 +530,26 @@ const styles = StyleSheet.create({
     borderColor: '#C6C6C8',
   },
   storageDaysUnit: { fontSize: 16, color: '#333' },
+  cameraContainer: { flex: 1, backgroundColor: '#000' },
+  corner: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderColor: '#fff',
+  },
+  cameraHint: { color: '#fff', fontSize: 14, textAlign: 'center' },
+  cameraClose: {
+    position: 'absolute',
+    top: 56,
+    left: 16,
+    padding: 8,
+  },
+  lookingUpOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  lookingUpText: { color: '#fff', fontSize: 16 },
 });

@@ -29,7 +29,13 @@
     },
     "plugins": [
       "expo-router",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "バーコードを読み取るためカメラへのアクセスを許可してください"
+        }
+      ]
     ],
     "extra": {
       "router": {},
