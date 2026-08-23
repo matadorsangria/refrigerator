@@ -8,10 +8,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '../store/AppContext';
 import { supabase } from '../lib/supabase';
 import { RoomId } from '../types';
+import { CATEGORY_VALUES } from '../utils/categories';
 
 const QUANTITY_VALUES = [0, ...Array.from({ length: 40 }, (_, i) => 0.5 + i * 0.5)];
 const UNIT_VALUES = ['個', '本', '枚', '束', '袋', 'パック'];
-export const CATEGORY_VALUES = ['肉・魚・卵', '大豆製品', '乳製品', '野菜', '果物', 'パン・ご飯・麺', 'スイーツ', '飲料', '冷凍食品', '缶詰・瓶詰', '乾物・粉類', '調味料', 'その他'];
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const FRAME_SIZE = Math.round(SCREEN_WIDTH * 0.65);
@@ -157,6 +157,10 @@ export function IngredientForm({ title, initialName = '', initialRoomId = 1, ini
       }
       setName(result.name);
       setNameError('');
+      if (result.category) {
+        setCategory(result.category);
+        setCategoryError('');
+      }
     } catch {
       setShowCamera(false);
       setIsLookingUp(false);

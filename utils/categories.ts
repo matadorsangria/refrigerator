@@ -1,9 +1,9 @@
 import { Ingredient } from '../types';
 import { sortByExpiry } from './expiry';
 
-export const CATEGORY_ORDER = ['肉・魚・卵', '大豆製品', '乳製品', '野菜', '果物', 'パン・ご飯・麺', 'スイーツ', '飲料', '冷凍食品', '缶詰・瓶詰', '乾物・粉類', '調味料', 'その他'];
+export const CATEGORY_VALUES = ['肉・魚・卵', '大豆製品', '乳製品', '野菜', '果物', 'パン・ご飯・麺', 'スイーツ', '飲料', '冷凍食品', '缶詰・瓶詰', '乾物・粉類', '調味料', 'その他'];
 
-const CATEGORY_SET = new Set(CATEGORY_ORDER);
+const CATEGORY_SET = new Set(CATEGORY_VALUES);
 
 export function groupByCategory(ingredients: Ingredient[]): { title: string; data: Ingredient[] }[] {
   const map: Record<string, Ingredient[]> = {};
@@ -12,7 +12,7 @@ export function groupByCategory(ingredients: Ingredient[]): { title: string; dat
     if (!map[cat]) map[cat] = [];
     map[cat].push(ing);
   }
-  return CATEGORY_ORDER
+  return CATEGORY_VALUES
     .filter(cat => map[cat]?.length > 0)
     .map(cat => ({ title: cat, data: sortByExpiry(map[cat]) }));
 }
