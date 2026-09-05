@@ -35,7 +35,8 @@
         {
           "cameraPermission": "バーコードを読み取るためカメラへのアクセスを許可してください"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "router": {},
